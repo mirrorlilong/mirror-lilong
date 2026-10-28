@@ -1,0 +1,145 @@
+# Pages CMS (app.pagescms.org) settings: the phone admin panel for Mirror Lilong.
+# Saving here commits to GitHub; the site rebuilds and goes live in about 1-2 minutes.
+media:
+  input: static/img
+  output: /img
+  categories: [image]
+  rename: safe
+
+settings:
+  commit:
+    templates:
+      create: "Add story: {path}"
+      update: "Edit story: {path}"
+      delete: "Delete story: {path}"
+
+content:
+  - name: stories
+    label: News stories
+    type: collection
+    path: content/stories
+    format: json
+    filename: "{primary}.json"
+    view:
+      fields: [title, category, date]
+      primary: title
+      sort: [date, title]
+      search: [title, summary]
+      default:
+        sort: date
+        order: desc
+    fields:
+      - name: title
+        label: Headline
+        type: string
+        required: true
+      - name: date
+        label: Date and time
+        description: Newest stories show first.
+        type: date
+        required: true
+        options:
+          time: true
+          format: "yyyy-MM-dd'T'HH:mm"
+      - name: category
+        label: Section
+        type: select
+        required: true
+        default: Manipur
+        options:
+          values: [Manipur, Northeast, India, World, Sports, Entertainment]
+      - name: also_in
+        label: Also show in another section (optional)
+        type: select
+        options:
+          values: [Manipur, Northeast, India, World, Sports, Entertainment]
+      - name: summary
+        label: Short summary (1-2 lines under the headline)
+        type: text
+      - name: image
+        label: Photo
+        description: Shown on the home page and at the top of the story.
+        type: image
+        required: true
+      - name: image_credit
+        label: Photo credit
+        type: string
+        default: "Image: Mirror Lilong"
+      - name: body
+        label: Story text
+        description: Leave an empty line between paragraphs.
+        type: text
+        required: true
+      - name: facebook
+        label: Facebook post link (optional)
+        description: Adds a "Read on Facebook" link.
+        type: string
+      - name: sources
+        label: Source links (optional)
+        type: object
+        list: true
+        fields:
+          - name: name
+            label: Source name (e.g. The Hindu)
+            type: string
+          - name: url
+            label: Link
+            type: string
+      - name: lead
+        label: Big story at the top of the home page
+        description: If several are on, the newest one is used.
+        type: boolean
+        default: false
+      - name: breaking
+        label: Show in the BREAKING ticker
+        type: boolean
+        default: false
+      - name: top
+        label: Show in Top Stories
+        type: boolean
+        default: true
+      - name: trending
+        label: Show in Trending
+        type: boolean
+        default: false
+      - name: desk
+        label: Mirror Lilong's own story (red badge)
+        type: boolean
+        default: true
+      - name: video
+        label: Video story (play icon, listed on Videos)
+        type: boolean
+        default: false
+      - name: full_image
+        label: Different full-size photo for the story page (optional)
+        type: image
+      - name: hidden
+        label: Hide this story from the website
+        type: boolean
+        default: false
+
+  - name: videos
+    label: Videos page
+    type: file
+    path: content/settings/videos.json
+    format: json
+    fields:
+      - name: links
+        label: Video links
+        type: object
+        list: true
+        fields:
+          - name: title
+            label: Title
+            type: string
+          - name: url
+            label: Link (Facebook, YouTube or Instagram)
+            type: string
+          - name: image
+            label: Thumbnail
+            type: image
+          - name: where
+            label: Where it plays
+            type: select
+            options:
+              values: [Facebook, YouTube, Instagram]
