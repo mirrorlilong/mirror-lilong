@@ -95,14 +95,14 @@ collections:
         fields:
           - { name: name, label: Source name, widget: string, hint: "e.g. The Hindu" }
           - { name: url, label: Link, widget: string }
-      - { name: lead, label: Big story at the top of the home page, widget: boolean, default: false, hint: "If several are on, the newest one is used." }
-      - { name: breaking, label: Show in the BREAKING ticker, widget: boolean, default: false }
-      - { name: top, label: Show in Top Stories, widget: boolean, default: true }
-      - { name: trending, label: Show in Trending, widget: boolean, default: false }
-      - { name: desk, label: Mirror Lilong's own story (adds the red badge), widget: boolean, default: true }
-      - { name: video, label: Video story (adds a play icon and lists it on Videos), widget: boolean, default: false }
+      - { name: lead, label: Big story at the top of the home page, widget: boolean, required: false, default: false, hint: "If several are on, the newest one is used." }
+      - { name: breaking, label: Show in the BREAKING ticker, widget: boolean, required: false, default: false }
+      - { name: top, label: Show in Top Stories, widget: boolean, required: false, default: true }
+      - { name: trending, label: Show in Trending, widget: boolean, required: false, default: false }
+      - { name: desk, label: Mirror Lilong's own story (adds the red badge), widget: boolean, required: false, default: true }
+      - { name: video, label: Video story (adds a play icon and lists it on Videos), widget: boolean, required: false, default: false }
       - { name: full_image, label: Different full-size image for the story page (optional), widget: image, required: false }
-      - { name: hidden, label: Hide this story from the website, widget: boolean, default: false }
+      - { name: hidden, label: Hide this story from the website, widget: boolean, required: false, default: false }
 
   - name: settings
     label: Videos page
