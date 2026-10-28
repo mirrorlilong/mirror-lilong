@@ -24,7 +24,7 @@ jobs:
           python-version: "3.12"
       - name: Build site
         env:
-          URL: https://mirrorlilong.github.io/mirror-lilong
+          URL: https://mirrorlilong.com
         run: |
           python3 build.py
           touch _site/.nojekyll

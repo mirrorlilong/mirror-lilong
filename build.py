@@ -185,14 +185,14 @@ def header(active, ctx):
     return ('<a class="skip" href="#main">Skip to content</a>'
      '<div class="topbar"><div class="wrap topbar-in"><span id="today" class="today">%s</span><span class="topbar-links">%s%s%s</span></div></div>'
      '<header class="masthead"><div class="wrap mast-in"><button class="menu-btn" id="menuBtn" type="button" aria-controls="mainNav" aria-expanded="false" aria-label="Open sections menu"><span></span><span></span><span></span></button>'
-     '<a href="index.html" class="brand"><img src="logo.svg" alt="Mirror Lilong" width="389" height="66"></a><a class="watch-btn" href="videos.html"><span class="dot" aria-hidden="true"></span>Watch</a></div>'
+     '<a href="index.html" class="brand"><picture><source srcset="logo.webp" type="image/webp"><img src="logo.png" alt="Mirror Lilong" width="1200" height="197"></picture></a><a class="watch-btn" href="videos.html"><span class="dot" aria-hidden="true"></span>Watch</a></div>'
      '<nav class="mainnav" id="mainNav" aria-label="Sections"><ul class="wrap">%s</ul></nav></header>'
      '<div class="ticker" role="region" aria-label="Breaking news"><div class="wrap ticker-in"><span class="ticker-label">Breaking</span><div class="ticker-track"><div class="ticker-move"><span>%s</span><span aria-hidden="true">%s</span></div></div></div></div>') % (
      ctx['today'], ext(FBPAGE, 'Facebook'), ext(IG, 'Instagram'), ext(YT, 'YouTube'), nav, tick, tick.replace('<a ', '<a tabindex="-1" '))
 
 def footer(ctx):
     cats = ''.join('<li><a href="%s">%s</a></li>' % (h, n) for n, h in NAV[1:])
-    return ('<footer class="footer"><div class="wrap foot-in"><div class="foot-brand"><img src="logo-white.svg" alt="Mirror Lilong" width="389" height="66" loading="lazy">'
+    return ('<footer class="footer"><div class="wrap foot-in"><div class="foot-brand"><picture><source srcset="logo-white.webp" type="image/webp"><img src="logo-white.png" alt="Mirror Lilong" width="1200" height="197" loading="lazy"></picture>'
      '<p>News, interviews and stories from Lilong, Manipur and the Northeast.</p><p class="social">%s &middot; %s &middot; %s</p></div>'
      '<div><h2 class="foot-h">Sections</h2><ul class="foot-list">%s</ul></div>'
      '<div><h2 class="foot-h">About our stories</h2><p class="small">Stories marked <b>Mirror Lilong</b> come from the Mirror Lilong desk. Other stories are short original summaries, and each one links to the publisher that first reported it. Photos are credited on each story.</p></div></div>'
@@ -205,7 +205,7 @@ def page(title, desc, active, main, ctx, og_img=None):
     if og_img and base:
         og += '<meta property="og:image" content="%s">' % esc(og_img if og_img.startswith('http') else base + '/' + og_img)
     return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-     '<title>%s</title><meta name="description" content="%s">%s<meta name="theme-color" content="#d7141a"><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css"></head><body>'
+     '<title>%s</title><meta name="description" content="%s">%s<meta name="theme-color" content="#d7141a"><link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png"><link rel="icon" href="favicon-192.png" sizes="192x192" type="image/png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="stylesheet" href="styles.css"></head><body>'
      '%s<main id="main" class="wrap">%s</main>%s</body></html>') % (esc(title), esc(desc), og, header(active, ctx), main, footer(ctx))
 
 def sec_title(t, href=None):

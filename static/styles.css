@@ -13,7 +13,7 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffbf00;outline-offset:2p
 /* masthead */
 .masthead{background:#fff;border-bottom:3px solid var(--red);position:sticky;top:0;z-index:20;box-shadow:0 2px 6px rgba(0,0,0,.06)}
 .mast-in{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:8px;padding-bottom:8px}
-.brand img{height:40px;width:auto}
+.brand{display:block;min-width:0;flex:0 1 auto;line-height:0}.brand picture{display:block}.brand img{display:block;height:40px;width:auto;max-width:100%;object-fit:contain}
 .menu-btn{width:40px;height:40px;border:0;background:transparent;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:8px;cursor:pointer}
 .menu-btn span{display:block;height:3px;background:var(--ink);border-radius:2px}
 .watch-btn{display:inline-flex;align-items:center;gap:6px;background:var(--red);color:#fff;font-weight:700;font-size:13px;padding:7px 11px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em}
@@ -123,7 +123,7 @@ time{color:var(--mute);font-size:12.5px}
 /* footer */
 .footer{background:#111;color:#cfcfcf;margin-top:36px;border-top:4px solid var(--red)}
 .foot-in{display:grid;gap:22px;padding-top:26px;padding-bottom:20px}
-.foot-brand img{height:42px;width:auto;margin-bottom:10px}
+.foot-brand img{display:block;height:42px;width:auto;max-width:100%;margin-bottom:10px}
 .foot-h{color:#fff;font-size:14px;text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px}
 .foot-list{list-style:none;padding:0;margin:0;columns:2}.foot-list a{display:block;padding:4px 0}
 .footer a:hover{color:#fff;text-decoration:underline}
