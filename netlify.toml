@@ -1,0 +1,19 @@
+# Netlify: builds the site from content/ with plain Python (no packages) and publishes _site/.
+[build]
+  command = "python3 build.py"
+  publish = "_site"
+
+[build.environment]
+  PYTHON_VERSION = "3.12"
+
+# Stories change every day, so make browsers check for fresh pages; photos, logo and styles can cache.
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+    X-Robots-Tag = "noindex"
