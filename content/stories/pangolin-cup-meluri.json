@@ -2,7 +2,7 @@
   "title": "Pangolin Cup kicks off in Nagaland's Meluri to protect the scaly anteater",
   "date": "2026-10-26T12:30",
   "category": "Northeast",
-  "also_in": "Sports",
+  "also_in": "Northeast",
   "summary": "Eight local teams are playing football to raise awareness of the illegal wildlife trade.",
   "image": "/img/pangolin.jpg",
   "image_credit": "Representative photo: a Chinese pangolin, a species found in Northeast India. Photo: Yung-Lun Lin / [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Manis_pentadactyla_pentadactyla_462300623.jpg), CC BY 4.0",
@@ -18,5 +18,6 @@
   "top": false,
   "trending": false,
   "desk": false,
-  "video": false
+  "video": false,
+  "hidden": false
 }
