@@ -6,12 +6,6 @@ media:
   categories: [image]
   rename: safe
 
-settings:
-  commit:
-    templates:
-      create: "Add story: {path}"
-      update: "Edit story: {path}"
-      delete: "Delete story: {path}"
 
 content:
   - name: stories
