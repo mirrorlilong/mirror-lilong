@@ -3,9 +3,8 @@
   "date": "2026-10-27T08:00",
   "category": "Entertainment",
   "summary": "The FRRO notice is suspended until the next hearing on November 2 at 3 pm.",
-  "image": "/img/fb-1162440293010485.jpg",
-  "full_image": "/img/fb-1162440293010485-card.jpg",
-  "image_credit": "Image: Mirror Lilong",
+  "image": "/img/modern-daily-podcast-youtube-thumbnail-12.png",
+  "image_credit": "Image: Indian Express/Akash Patil",
   "body": "On October 27 the Bombay High Court put on hold the October 14 FRRO notice that ordered actor Imran Khan to leave India. The hold lasts until the next hearing on November 2, 2026, at 3 pm.\n\nThe court recorded the Centre's assurance that the notice would be kept in abeyance. That means Khan, a US citizen and OCI cardholder, can stay in India past the October 28 deadline in the notice.\n\nThe notice followed his alleged part in an October 10 protest against the Chief Election Commissioner. In his petition, Khan denies taking part and says he was never given a hearing.",
   "facebook": "https://www.facebook.com/100077335757093/photos/1162440293010485/",
   "sources": [
@@ -19,5 +18,6 @@
   "top": false,
   "trending": true,
   "desk": true,
-  "video": false
+  "video": false,
+  "hidden": false
 }
