@@ -196,7 +196,7 @@ def footer(ctx):
      '<p>News, interviews and stories from Lilong, Manipur and the Northeast.</p><p class="social">%s &middot; %s &middot; %s</p></div>'
      '<div><h2 class="foot-h">Sections</h2><ul class="foot-list">%s</ul></div>'
      '<div><h2 class="foot-h">About our stories</h2><p class="small">Stories marked <b>Mirror Lilong</b> come from the Mirror Lilong desk. Other stories are short original summaries, and each one links to the publisher that first reported it. Photos are credited on each story.</p></div></div>'
-     '<div class="copy"><div class="wrap">&copy; %s Mirror Lilong &middot; Imphal, Manipur</div></div></footer><script src="script.js" defer></script>') % (
+     '<div class="copy"><div class="wrap copy-in"><span>&copy; %s Mirror Lilong &middot; Imphal, Manipur</span><nav class="foot-legal" aria-label="About Mirror Lilong"><a href="about.html">About</a> &middot; <a href="contact.html">Contact</a> &middot; <a href="privacy-policy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms</a></nav></div></div></footer><script src="script.js" defer></script>') % (
      ext(FBPAGE, 'Facebook'), ext(IG, 'Instagram'), ext(YT, 'YouTube'), cats, ctx['year'])
 
 def page(title, desc, active, main, ctx, og_img=None):
@@ -205,7 +205,7 @@ def page(title, desc, active, main, ctx, og_img=None):
     if og_img and base:
         og += '<meta property="og:image" content="%s">' % esc(og_img if og_img.startswith('http') else base + '/' + og_img)
     return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-     '<title>%s</title><meta name="description" content="%s">%s<meta name="theme-color" content="#d7141a"><link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png"><link rel="icon" href="favicon-192.png" sizes="192x192" type="image/png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="stylesheet" href="styles.css"></head><body>'
+     '<title>%s</title><meta name="description" content="%s">%s<meta name="theme-color" content="#d7141a"><link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png"><link rel="icon" href="favicon-192.png" sizes="192x192" type="image/png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="stylesheet" href="styles.css"><meta name="google-adsense-account" content="ca-pub-4739495411759158"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4739495411759158" crossorigin="anonymous"></script></head><body>'
      '%s<main id="main" class="wrap">%s</main>%s</body></html>') % (esc(title), esc(desc), og, header(active, ctx), main, footer(ctx))
 
 def sec_title(t, href=None):
@@ -321,6 +321,67 @@ def build_article(stories, s, ctx):
           markdown(s.get('body')), srcs, trending(ctx, s), follow_box(), rel)
     return page('%s | Mirror Lilong' % s['title'], s['summary'] or s['title'], s['cat'], main, ctx, s['img'])
 
+# ---------- About / Contact / Privacy / Terms ----------
+def info_page(title, desc, h1, body, ctx):
+    main = ('<div class="two-col article-wrap"><article class="article info-page"><nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> &rsaquo; %s</nav>'
+            '<h1>%s</h1><div class="art-body info-body">%s</div></article><aside class="col-side">%s%s</aside></div>') % (h1, h1, body, trending(ctx), follow_box())
+    return page(title, desc, None, main, ctx)
+
+def build_info(ctx):
+    fb, ig, yt = ext(FBPAGE, 'Facebook page'), ext(IG, 'Instagram (@mirrorlilong)'), ext(YT, 'YouTube channel')
+    about = (
+        '<p>Mirror Lilong is an independent local news outlet from Lilong, Manipur. We report on what matters to people in Lilong and across Manipur, and we keep readers up to date on the Northeast, India and the world.</p>'
+        '<h2>What we cover</h2><ul><li><a href="manipur.html">Manipur</a>: local news, community events and ground reports</li><li><a href="northeast.html">Northeast</a>: stories from the neighbouring states</li>'
+        '<li><a href="india.html">India</a> and <a href="world.html">World</a>: the national and international news our readers follow</li><li><a href="sports.html">Sports</a> and <a href="entertainment.html">Entertainment</a></li>'
+        '<li><a href="videos.html">Videos</a>: interviews, podcasts and ground reports</li></ul>'
+        '<h2>Our mission</h2><p>We want people in Lilong and Manipur to have quick, clear and fair news about their own community, in one place. We aim to be accurate, to be fair to everyone in a story, and to correct mistakes when we make them.</p>'
+        '<h2>How our stories work</h2><p>Stories marked <b>Mirror Lilong</b> are reported by the Mirror Lilong desk. Other stories are short summaries written by us, and each one links to the publisher that first reported it. Photos are credited on each story.</p>'
+        '<h2>Who we are</h2><p>Mirror Lilong is run by the Mirror Lilong team. Our Facebook community has grown to around 194,000 followers, and we also share news and videos on Instagram and YouTube.</p>'
+        '<p>Have a story, a correction or a question? See our <a href="contact.html">Contact</a> page.</p>')
+    contact = (
+        '<p>We would love to hear from you, whether you have a news tip, a correction, a question about a story, or an advertising enquiry.</p>'
+        '<h2>Message us</h2><p>The fastest way to reach the Mirror Lilong team is to send us a message on our %s. We read every message.</p>'
+        '<ul><li>Facebook: %s</li><li>Instagram: %s</li><li>YouTube: %s</li></ul>'
+        '<h2>Corrections</h2><p>If you think something in one of our stories is wrong, message us on Facebook with the story link and what needs fixing. We will check it and correct the story if needed.</p>'
+        '<h2>News tips</h2><p>Seen something in Lilong or anywhere in Manipur that people should know about? Send us the details, and photos or videos if you have them.</p>'
+        '<p>Based in Lilong, Manipur, India.</p>') % (fb, ext(FBPAGE, 'facebook.com/mirrorlilong'), ext(IG, '@mirrorlilong'), ext(YT, '@teammirrormanipur'))
+    privacy = (
+        '<p><i>Last updated: 29 October 2026</i></p>'
+        '<p>This Privacy Policy explains what information is collected when you visit mirrorlilong.com (the &ldquo;Site&rdquo;), run by the Mirror Lilong team (&ldquo;we&rdquo;, &ldquo;us&rdquo;), and how it is used. By using the Site you agree to this policy.</p>'
+        '<h2>Information we collect</h2><p>You can read the Site without creating an account or giving us any personal information. We do not run sign-up forms or comment sections on the Site. If you message us on Facebook, Instagram or YouTube, those platforms handle your message under their own privacy policies, and we only use what you send us to reply to you.</p>'
+        '<p>Like most websites, our hosting provider may automatically record basic technical information when you visit, such as your IP address, browser type, the pages you request and the time of your visit. This is used to deliver and secure the Site.</p>'
+        '<h2>Cookies</h2><p>Cookies are small text files stored on your device by your web browser. We do not set our own tracking cookies. However, third parties that serve advertising on the Site, including Google, use cookies as described below.</p>'
+        '<h2>Advertising and Google AdSense</h2><p>We use Google AdSense to show advertisements on the Site. Google is a third-party vendor that uses cookies to serve ads on this Site.</p>'
+        '<ul><li>Third-party vendors, including Google, use cookies to serve ads based on your previous visits to this website or other websites.</li>'
+        '<li>Google&rsquo;s use of advertising cookies, including the DoubleClick cookie, enables it and its partners to serve ads to you based on your visits to this Site and/or other sites on the Internet.</li>'
+        '<li>You may opt out of personalised advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener">Google Ads Settings</a>. You can also opt out of some third-party vendors&rsquo; use of cookies for personalised advertising at <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener">www.aboutads.info</a>.</li>'
+        '<li>To learn how Google uses information from sites that use its services, see <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">How Google uses cookies in advertising</a> and <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">How Google uses information from sites or apps that use its services</a>.</li></ul>'
+        '<p>If you do not opt out, you may still see ads, but they will not be personalised. You can also block or delete cookies in your browser settings; some parts of the Site may then work differently.</p>'
+        '<h2>Analytics</h2><p>We do not currently use any analytics or visitor-tracking service on the Site. If we add one in the future, we will update this policy.</p>'
+        '<h2>Links to other websites</h2><p>Our stories link to other websites, such as the publishers that first reported a story, and to our social media pages. We are not responsible for the content or privacy practices of those sites.</p>'
+        '<h2>Children</h2><p>The Site is a general news site and is not directed at children under 13. We do not knowingly collect personal information from children.</p>'
+        '<h2>Your choices</h2><p>You can control cookies through your browser settings and the opt-out links above. If you have contacted us and want us to delete your messages or any information you sent us, let us know.</p>'
+        '<h2>Changes to this policy</h2><p>We may update this policy from time to time. The date at the top shows when it was last changed.</p>'
+        '<h2>Governing law</h2><p>This policy is governed by the laws of India.</p>'
+        '<h2>Contact</h2><p>For any questions about this Privacy Policy, message us on our %s or see our <a href="contact.html">Contact</a> page.</p>') % fb
+    terms = (
+        '<p><i>Last updated: 29 October 2026</i></p>'
+        '<p>By using mirrorlilong.com (the &ldquo;Site&rdquo;) you agree to these terms. If you do not agree, please do not use the Site.</p>'
+        '<h2>Content</h2><p>The stories, photos and videos on the Site are for general information only. We work to keep our reporting accurate and up to date, but we cannot guarantee that every detail is complete or free of errors, and news can change after a story is published. Please do not rely on the Site as your only source for important decisions.</p>'
+        '<h2>Copyright</h2><p>Original Mirror Lilong stories, photos and videos belong to Mirror Lilong unless credited otherwise. You are welcome to share links to our stories. Please do not copy or republish our original content in full without permission. Photos and material from other publishers belong to their owners and are credited on each story.</p>'
+        '<h2>Other websites</h2><p>The Site links to other websites, including the publishers that first reported a story and social media platforms. We do not control those sites and are not responsible for their content.</p>'
+        '<h2>Advertising</h2><p>The Site shows advertisements served by Google AdSense. Ads are provided by third parties, and showing an ad does not mean we endorse the product or service. See our <a href="privacy-policy.html">Privacy Policy</a> for how advertising cookies work.</p>'
+        '<h2>Liability</h2><p>To the extent allowed by law, Mirror Lilong is not liable for any loss or damage arising from the use of the Site or reliance on its content.</p>'
+        '<h2>Changes</h2><p>We may update these terms at any time. The date at the top shows when they were last changed.</p>'
+        '<h2>Governing law</h2><p>These terms are governed by the laws of India.</p>'
+        '<h2>Contact</h2><p>Questions about these terms? Message us on our %s or see our <a href="contact.html">Contact</a> page.</p>') % fb
+    return [
+        ('about.html', info_page('About Us | Mirror Lilong', 'About Mirror Lilong, independent local news from Lilong and Manipur.', 'About Mirror Lilong', about, ctx)),
+        ('contact.html', info_page('Contact Us | Mirror Lilong', 'How to contact the Mirror Lilong team with news tips, corrections and questions.', 'Contact Us', contact, ctx)),
+        ('privacy-policy.html', info_page('Privacy Policy | Mirror Lilong', 'How Mirror Lilong handles information, cookies and Google AdSense advertising.', 'Privacy Policy', privacy, ctx)),
+        ('terms.html', info_page('Terms of Use | Mirror Lilong', 'Terms of use and disclaimer for mirrorlilong.com.', 'Terms of Use', terms, ctx)),
+    ]
+
 def main():
     stories = load_stories()
     if not stories:
@@ -346,6 +407,10 @@ def main():
     for c in CATS:
         w(c.lower() + '.html', build_cat(stories, c, ctx))
     w('videos.html', build_videos(stories, videos, ctx))
+    for name, text in build_info(ctx):
+        w(name, text)
+    with open(os.path.join(OUT, 'ads.txt'), 'w', encoding='utf-8') as f:
+        f.write('google.com, pub-4739495411759158, DIRECT, f08c47fec0942fa0\n')
     for s in stories:
         w(url(s), build_article(stories, s, ctx))
         for p in (s['img'], s['full']):

@@ -197,3 +197,9 @@ time{color:var(--mute);font-size:12.5px}
 @media (prefers-reduced-motion:reduce){.ls-track{scroll-behavior:auto}}
 .ls-slide .dek{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 @media (min-width:980px) and (hover:hover) and (pointer:fine){.ls-arrow{top:calc(30% - 22px)}}
+
+/* footer legal links + info pages */
+.copy-in{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:space-between;align-items:center}
+.foot-legal a{color:#cfcfcf}
+.info-body p:first-child:first-letter{float:none;font-size:inherit;line-height:inherit;padding:0;font-weight:inherit;color:inherit}
+.info-body a{color:var(--red);text-decoration:underline}
