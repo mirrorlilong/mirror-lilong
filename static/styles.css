@@ -337,3 +337,23 @@ time{color:var(--mute);font-size:12.5px}
 .lead-slider .lead-body{padding-bottom:10px}
 @media (min-width:980px){.lead-slider .lead-body{padding-bottom:34px}.ls-slide .lead-body time{margin-top:0}}
 @media (min-width:980px){.mast-tools{z-index:80}.has-sub:hover,.has-sub.open{background:var(--red)}.has-sub:hover>a{background:transparent}}
+
+/* Trending news (from publishers' feeds, rebuilt every 3 hours) */
+.tnews .sec-title{margin-bottom:6px}
+.tn-upd{margin:0 0 6px;font-size:12px;color:var(--mute);display:flex;align-items:center;gap:6px}
+.tn-live{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 rgba(215,20,26,.5);animation:tnpulse 2s infinite}
+@keyframes tnpulse{70%{box-shadow:0 0 0 7px rgba(215,20,26,0)}100%{box-shadow:0 0 0 0 rgba(215,20,26,0)}}
+.tn-list{list-style:none;margin:0;padding:0}
+.tn-item a{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+.tn-item:last-child a{border-bottom:0}
+.tn-img{flex:0 0 112px;width:112px;aspect-ratio:3/2;overflow:hidden;background:var(--soft);border-radius:2px}
+.tn-img img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.tn-item a:hover img{transform:scale(1.05)}
+.tn-body{min-width:0;display:flex;flex-direction:column;gap:3px}
+.tn-cat{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--red)}
+.tn-northeast .tn-cat{color:#0b7a53}.tn-india .tn-cat{color:#c25e00}.tn-world .tn-cat{color:#1f5fbf}
+.tn-tt{font-weight:700;font-size:14.5px;line-height:1.3;color:var(--ink);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tn-item a:hover .tn-tt{color:var(--red)}
+.tn-meta{font-size:12px;color:var(--mute)}
+@media (max-width:979px){.tn-img{flex-basis:120px;width:120px}.tn-tt{font-size:15px}}
+@media (prefers-reduced-motion:reduce){.tn-live{animation:none}.tn-img img{transition:none}}

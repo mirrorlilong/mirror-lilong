@@ -292,7 +292,34 @@ def sec_title(t, href=None):
     more = ' <a class="more" href="%s">More &rsaquo;</a>' % href if href else ''
     return '<h2 class="sec-title"><span>%s</span>%s</h2>' % (t, more)
 
+def ago(iso_s, now):
+    try:
+        d = datetime.datetime.fromisoformat(iso_s.replace('Z', '+00:00'))
+    except Exception:
+        return '', ''
+    m = int((now - d).total_seconds() // 60)
+    txt = 'just now' if m < 2 else '%d min ago' % m if m < 60 else '%d hr ago' % (m // 60) if m < 1440 else d.astimezone(IST).strftime('%d %b')
+    return txt, d.astimezone(IST).strftime('%d %b %Y, %H:%M IST')
+
 def trending(ctx, exclude=None, n=6):
+    news = ctx.get('news')
+    if news and news.get('items'):
+        # live news from publishers' feeds (trending.py), Manipur first, then Northeast, India, World
+        now = ctx['now']
+        rows = ''
+        for x in news['items']:
+            when, full = ago(x.get('published', ''), now)
+            c = x.get('category', '')
+            rows += ('<li class="tn-item tn-%s"><a href="%s" target="_blank" rel="noopener"><span class="tn-img"><img src="%s" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" width="120" height="80" onerror="this.closest(\'li\').hidden=true"></span>'
+                     '<span class="tn-body"><span class="tn-cat">%s</span><span class="tn-tt">%s</span><span class="tn-meta">%s &middot; <time datetime="%s" title="%s" data-ago>%s</time></span></span></a></li>') % (
+                     esc(c.lower()), esc(x['url']), esc(x['image']), esc(c), esc(x['title']), esc(x.get('source', '')), esc(x.get('published', '')), esc(full), when)
+        upd = ''
+        try:
+            u = datetime.datetime.fromisoformat(news['updated'].replace('Z', '+00:00')).astimezone(IST)
+            upd = '<p class="tn-upd"><span class="tn-live" aria-hidden="true"></span>Updated %s IST</p>' % u.strftime('%H:%M')
+        except Exception:
+            pass
+        return '<section class="trending tnews" aria-label="Trending news">%s%s<ol class="tn-list">%s</ol></section>' % (sec_title('Trending'), upd, rows)
     lst = [s for s in ctx['trend'] if s is not exclude][:n]
     items = ''.join('<li><a href="%s"><span class="num">%d</span><span class="tt">%s</span></a></li>' % (url(s), i + 1, esc(s['title'])) for i, s in enumerate(lst))
     return '<section class="trending" aria-label="Trending">%s<ol>%s</ol></section>' % (sec_title('Trending'), items)
@@ -513,6 +540,16 @@ def main():
     ctx['top'] = flagged(stories, 'top', 5, exclude=tuple(slides))
     ctx['tick'] = flagged(stories, 'breaking', 7)
     ctx['trend'] = flagged(stories, 'trending', 8)
+    ctx['now'] = datetime.datetime.now(datetime.timezone.utc)
+    # Trending: the latest real news (Manipur > Northeast > India > World) read from publishers' feeds at
+    # build time; the workflow rebuilds every 3 hours. Any failure keeps the last good list or the old box.
+    ctx['news'] = None
+    if os.environ.get('TRENDING', '1') != '0':
+        try:
+            import trending as trending_feed
+            ctx['news'] = trending_feed.get_trending()
+        except Exception as e:
+            warn('trending news skipped (%s)' % e)
     if os.path.isdir(OUT):
         shutil.rmtree(OUT)
     shutil.copytree(STATIC, OUT, ignore=shutil.ignore_patterns('.gitkeep', '.DS_Store'))
@@ -533,6 +570,9 @@ def main():
         f.write(search_index(stories))
     for name, text in build_info(ctx):
         w(name, text)
+    if ctx['news']:
+        with open(os.path.join(OUT, 'trending.json'), 'w', encoding='utf-8') as f:
+            json.dump(ctx['news'], f, ensure_ascii=False, indent=1)
     with open(os.path.join(OUT, 'ads.txt'), 'w', encoding='utf-8') as f:
         f.write('google.com, pub-4739495411759158, DIRECT, f08c47fec0942fa0\n')
     for s in stories:

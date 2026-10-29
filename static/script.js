@@ -197,3 +197,11 @@
     paint(d,ts);
   }).catch(function(){if(cached&&cached.d)paint(cached.d,cached.ts,true);else fail();});
 })();
+
+/* Trending: keep "x hr ago" fresh between rebuilds */
+(function(){
+  var els=document.querySelectorAll('time[data-ago]');if(!els.length)return;
+  function upd(){var n=Date.now();for(var i=0;i<els.length;i++){var t=Date.parse(els[i].getAttribute('datetime'));if(isNaN(t))continue;var m=Math.floor((n-t)/60000);
+    els[i].textContent=m<2?'just now':m<60?m+' min ago':m<1440?Math.floor(m/60)+' hr ago':new Date(t).toLocaleDateString('en-IN',{day:'2-digit',month:'short',timeZone:'Asia/Kolkata'});}}
+  upd();setInterval(upd,60000);
+})();
