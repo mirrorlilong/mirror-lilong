@@ -580,6 +580,18 @@ def main():
         for p in (s['img'], s['full']):
             if not p.startswith('http') and not os.path.exists(os.path.join(OUT, p)):
                 warn('%s: image %s is missing' % (s['slug'], p))
+    # sitemap.xml + robots.txt for Google
+    import datetime as _dt
+    _today = _dt.date.today().isoformat()
+    _urls = []
+    for _fn in sorted(os.listdir(OUT)):
+        if _fn.endswith('.html') and _fn not in ('search.html', '404.html'):
+            _u = SITE + '/' if _fn == 'index.html' else SITE + '/' + _fn[:-5]
+            _urls.append('<url><loc>%s</loc><lastmod>%s</lastmod></url>' % (_u, _today))
+    with open(os.path.join(OUT, 'sitemap.xml'), 'w', encoding='utf-8') as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(_urls) + '\n</urlset>\n')
+    with open(os.path.join(OUT, 'robots.txt'), 'w', encoding='utf-8') as f:
+        f.write('User-agent: *\nAllow: /\nDisallow: /admin/\n\nSitemap: %s/sitemap.xml\n' % SITE)
     print('Built %d stories into _site/ (lead: %s)' % (len(stories), lead['slug']))
 
 if __name__ == '__main__':
