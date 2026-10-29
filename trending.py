@@ -76,8 +76,10 @@ def classify(title, summary, default):
     local_feed = default in ('Manipur', 'Northeast')
     if kw_hit(tl, MANIPUR_KW) or (default == 'Manipur' and not kw_hit(tl, NE_KW)) or (local_feed and kw_hit(t, MANIPUR_KW[:3])):
         return 'Manipur'
-    if kw_hit(tl, NE_KW) or local_feed:
+    if kw_hit(tl, NE_KW) or (local_feed and kw_hit(t, NE_KW)):
         return 'Northeast'
+    if default == 'Northeast':
+        return None  # a regional outlet's national/world wire copy: kept only as a signal
     if default == 'World' and kw_hit(tl, INDIA_KW):
         return 'India'
     return default
@@ -155,7 +157,8 @@ def parse_feed(data, source, default, editorial=False):
             img = html.unescape(img.strip())
             img = re.sub(r'(ichef\.bbci\.co\.uk/(?:ace/standard|news))/\d+/', r'\1/800/', img)
         out.append(dict(title=title, url=link, source=source, dt=dt, img=img, summary=summary, media=media, pos=len(out), ed=editorial,
-                        signal=default is None, cat=classify(title, summary, default or 'India')))
+                        cat=classify(title, summary, default or 'India')))
+        out[-1]['signal'] = default is None or out[-1]['cat'] is None
     return out
 
 class OG(HTMLParser):
@@ -245,7 +248,7 @@ def pick(items, now):
             o = next((x for x in g if x['img'] and x['source'] == h['source']), None)
             if o: h['img'], h['media'] = o['img'], o['media']
         # an item counts for the highest-priority tier any of its copies landed in
-        h['cat'] = min((x['cat'] for x in g if not x['signal']), key=TIERS.index)
+        h['cat'] = min((x['cat'] for x in g if not x['signal'] and x['cat']), key=TIERS.index)
         h['ed_pos'] = min([x['pos'] for x in g if x['ed']] or [99])
         h['srcs'] = {x['source'] for x in g}
         age = (now - h['dt']).total_seconds() / 3600.0
