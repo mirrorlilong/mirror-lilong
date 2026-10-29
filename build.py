@@ -6,6 +6,7 @@ plus content/settings/videos.json, and writes the finished static site into _sit
 Standard library only: no packages to install. Run:  python3 build.py
 """
 import json, html, datetime, os, re, shutil, struct, sys
+from urllib.parse import quote
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CONTENT = os.path.join(HERE, 'content')
@@ -19,6 +20,43 @@ IG = 'https://www.instagram.com/mirrorlilong/'
 YT = 'https://www.youtube.com/@teammirrormanipur'
 CATS = ['Manipur', 'Northeast', 'India', 'World', 'Sports', 'Entertainment']
 NAV = [('Home', 'index.html')] + [(c, c.lower() + '.html') for c in CATS] + [('Videos', 'videos.html')]
+SITE = 'https://mirrorlilong.com'  # used for share links
+# Google Analytics: paste a measurement id like "G-XXXXXXXXXX" here and every page gets the gtag snippet.
+GA_ID = ""
+
+SEARCH_SVG = '<svg class="ic-s" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'
+CLOSE_SVG = '<svg class="ic-x" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'
+CARET = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M2 4.2 6 8l4-3.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+WA_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>'
+FB_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>'
+LINK_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M10 14a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5M14 10a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>'
+
+# Northeast states: sub-sections of Northeast. Keywords (state, capital, major towns) place older
+# Northeast stories that have no "State (Northeast)" set.
+NE_STATES = [
+    ('Arunachal Pradesh', ['arunachal', 'itanagar', 'naharlagun', 'tawang', 'pasighat', 'ziro', 'bomdila', 'tezu', 'roing', '\u0905\u0930\u0941\u0923\u093e\u091a\u0932', '\u0908\u091f\u093e\u0928\u0917\u0930']),
+    ('Assam', ['assam', 'assamese', 'guwahati', 'dispur', 'dibrugarh', 'jorhat', 'silchar', 'tezpur', 'nagaon', 'tinsukia', 'dima hasao', 'haflong', 'umrangso', 'kaziranga', 'kokrajhar', 'bodoland', 'barak valley', '\u0905\u0938\u092e', '\u0917\u0941\u0935\u093e\u0939\u093e\u091f\u0940']),
+    ('Manipur', ['manipur', 'imphal', 'churachandpur', 'bishnupur', 'thoubal', 'ukhrul', 'kangpokpi', 'senapati', 'jiribam', 'moreh', 'lilong', 'tamenglong', 'chandel', '\u092e\u0923\u093f\u092a\u0941\u0930', '\u0907\u0902\u092b\u093e\u0932']),
+    ('Meghalaya', ['meghalaya', 'shillong', 'tura', 'jowai', 'cherrapunji', 'sohra', 'nongpoh', '\u092e\u0947\u0918\u093e\u0932\u092f', '\u0936\u093f\u0932\u093e\u0902\u0917']),
+    ('Mizoram', ['mizoram', 'mizo', 'aizawl', 'lunglei', 'champhai', 'kolasib', 'serchhip', '\u092e\u093f\u091c\u094b\u0930\u092e', '\u0906\u0907\u091c\u094b\u0932']),
+    ('Nagaland', ['nagaland', 'kohima', 'dimapur', 'mokokchung', 'tuensang', 'meluri', 'wokha', 'zunheboto', '\u0928\u093e\u0917\u093e\u0932\u0948\u0902\u0921', '\u0915\u094b\u0939\u093f\u092e\u093e']),
+    ('Tripura', ['tripura', 'agartala', 'dharmanagar', 'kailashahar', '\u0924\u094d\u0930\u093f\u092a\u0941\u0930\u093e', '\u0905\u0917\u0930\u0924\u0932\u093e']),
+]
+NE_NAMES = [n for n, _ in NE_STATES]
+def state_page(n): return 'northeast-%s.html' % n.lower().replace(' ', '-')
+# Weather box: the 7 state capitals (Open-Meteo, fetched in the reader's browser)
+NE_CAPITALS = [('Itanagar', 'Arunachal', 27.0844, 93.6053), ('Dispur', 'Assam', 26.1433, 91.7898), ('Imphal', 'Manipur', 24.8170, 93.9368),
+               ('Shillong', 'Meghalaya', 25.5788, 91.8933), ('Aizawl', 'Mizoram', 23.7271, 92.7176), ('Kohima', 'Nagaland', 25.6751, 94.1086), ('Agartala', 'Tripura', 23.8315, 91.2868)]
+
+def infer_states(text):
+    t = ' ' + re.sub(r'\s+', ' ', str(text or '').lower()) + ' '
+    t = t.replace('assam rifles', ' ')
+    found = []
+    for name, words in NE_STATES:
+        for kw in words:
+            if (re.search(r'(?<![a-z])' + re.escape(kw) + r'(?![a-z])', t) if kw.isascii() else kw in t):
+                found.append(name); break
+    return found
 
 def warn(msg): print('WARNING: ' + msg, file=sys.stderr)
 
@@ -77,6 +115,13 @@ def load_stories():
         if s.get('also_in') not in CATS or s.get('also_in') == cat:
             s['also_in'] = None
         s['summary'] = str(s.get('summary') or '').strip()
+        st = s.get('state') if s.get('state') in NE_NAMES else None
+        if st:
+            s['states'] = [st]
+        else:
+            s['states'] = infer_states(s['title'] + ' ' + s['summary']) if 'Northeast' in (cat, s['also_in']) else []
+        if 'Manipur' in (cat, s['also_in']) and 'Manipur' not in s['states']:
+            s['states'].append('Manipur')
         s['img'] = asset(s.get('image')) or 'img/lilong.jpg'
         s['full'] = asset(s.get('full_image')) or s['img']
         s['sources'] = [x for x in (s.get('sources') or []) if isinstance(x, dict) and x.get('url')]
@@ -180,15 +225,25 @@ def card(s, size='m', dek=False):
             size, url(s), esc(s['img']), play, esc(s['cat']), badge(s), esc(s['title']), d, iso(s), fdate(s))
 
 def header(active, ctx):
-    nav = ''.join('<li><a href="%s"%s>%s</a></li>' % (h, ' aria-current="page"' if n == active else '', n) for n, h in NAV)
+    def li(n, h):
+        cur = ' aria-current="page"' if n == active else ''
+        if n != 'Northeast':
+            return '<li><a href="%s"%s>%s</a></li>' % (h, cur, n)
+        sub = ''.join('<li><a href="%s">%s</a></li>' % (state_page(x), x) for x in NE_NAMES)
+        return ('<li class="has-sub"><a href="%s"%s>%s</a><button class="sub-btn" type="button" aria-expanded="false" aria-controls="neSub" aria-label="Show Northeast states">%s</button>'
+                '<ul class="sub" id="neSub"><li class="sub-all"><a href="%s">All Northeast</a></li>%s</ul></li>') % (h, cur, n, CARET, h, sub)
+    nav = ''.join(li(n, h) for n, h in NAV)
     tick = ' <span class="sep" aria-hidden="true">&#9670;</span> '.join('<a href="%s">%s</a>' % (url(s), esc(s['title'])) for s in ctx['tick'])
     return ('<a class="skip" href="#main">Skip to content</a>'
      '<div class="topbar"><div class="wrap topbar-in"><span id="today" class="today">%s</span><span class="topbar-links">%s%s%s</span></div></div>'
      '<header class="masthead"><div class="wrap mast-in"><button class="menu-btn" id="menuBtn" type="button" aria-controls="mainNav" aria-expanded="false" aria-label="Open sections menu"><span></span><span></span><span></span></button>'
-     '<a href="index.html" class="brand"><picture><source srcset="logo.webp" type="image/webp"><img src="logo.png" alt="Mirror Lilong" width="1200" height="197"></picture></a><a class="watch-btn" href="videos.html"><span class="dot" aria-hidden="true"></span>Watch</a></div>'
+     '<a href="index.html" class="brand"><picture><source srcset="logo.webp" type="image/webp"><img src="logo.png" alt="Mirror Lilong" width="1200" height="197"></picture></a><div class="mast-tools"><div class="hsearch" id="hSearch"><button class="hs-btn" id="hsBtn" type="button" aria-controls="hsForm" aria-expanded="false" aria-label="Search news">%s%s</button>'
+     '<form class="hs-form" id="hsForm" action="/search" method="get" role="search"><input class="hs-input" type="search" name="q" placeholder="Search news" autocomplete="off" enterkeyhint="search" aria-label="Search news" aria-controls="hsRes"><button class="hs-go" type="submit" aria-label="Search">%s</button>'
+     '<div class="hs-res" id="hsRes" hidden></div></form></div>'
+     '<a class="watch-btn" href="videos.html"><span class="dot" aria-hidden="true"></span>Watch</a></div></div>'
      '<nav class="mainnav" id="mainNav" aria-label="Sections"><ul class="wrap">%s</ul></nav></header>'
      '<div class="ticker" role="region" aria-label="Breaking news"><div class="wrap ticker-in"><span class="ticker-label">Breaking</span><div class="ticker-track"><div class="ticker-move"><span>%s</span><span aria-hidden="true">%s</span></div></div></div></div>') % (
-     ctx['today'], ext(FBPAGE, 'Facebook'), ext(IG, 'Instagram'), ext(YT, 'YouTube'), nav, tick, tick.replace('<a ', '<a tabindex="-1" '))
+     ctx['today'], ext(FBPAGE, 'Facebook'), ext(IG, 'Instagram'), ext(YT, 'YouTube'), SEARCH_SVG, CLOSE_SVG, SEARCH_SVG, nav, tick, tick.replace('<a ', '<a tabindex="-1" '))
 
 def footer(ctx):
     cats = ''.join('<li><a href="%s">%s</a></li>' % (h, n) for n, h in NAV[1:])
@@ -199,14 +254,39 @@ def footer(ctx):
      '<div class="copy"><div class="wrap copy-in"><span>&copy; %s Mirror Lilong &middot; Imphal, Manipur</span><nav class="foot-legal" aria-label="About Mirror Lilong"><a href="about.html">About</a> &middot; <a href="contact.html">Contact</a> &middot; <a href="privacy-policy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms</a></nav></div></div></footer><script src="script.js" defer></script>') % (
      ext(FBPAGE, 'Facebook'), ext(IG, 'Instagram'), ext(YT, 'YouTube'), cats, ctx['year'])
 
-def page(title, desc, active, main, ctx, og_img=None):
+def page(title, desc, active, main, ctx, og_img=None, strip=''):
     og = ('<meta property="og:title" content="%s"><meta property="og:description" content="%s"><meta property="og:type" content="website">' % (esc(title), esc(desc)))
     base = os.environ.get('URL', '').rstrip('/')  # Netlify sets URL to the site's address
     if og_img and base:
         og += '<meta property="og:image" content="%s">' % esc(og_img if og_img.startswith('http') else base + '/' + og_img)
     return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-     '<title>%s</title><meta name="description" content="%s">%s<meta name="theme-color" content="#d7141a"><link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png"><link rel="icon" href="favicon-192.png" sizes="192x192" type="image/png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="stylesheet" href="styles.css"><meta name="google-adsense-account" content="ca-pub-4739495411759158"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4739495411759158" crossorigin="anonymous"></script></head><body>'
-     '%s<main id="main" class="wrap">%s</main>%s</body></html>') % (esc(title), esc(desc), og, header(active, ctx), main, footer(ctx))
+     '<title>%s</title><meta name="description" content="%s">%s<meta name="theme-color" content="#d7141a"><link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png"><link rel="icon" href="favicon-192.png" sizes="192x192" type="image/png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="stylesheet" href="styles.css"><meta name="google-adsense-account" content="ca-pub-4739495411759158"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4739495411759158" crossorigin="anonymous"></script>%s</head><body>'
+     '%s%s<main id="main" class="wrap">%s</main>%s</body></html>') % (esc(title), esc(desc), og, ga_snippet(), header(active, ctx), strip, main, footer(ctx))
+
+def ga_snippet():
+    if not re.match(r'^G-[A-Z0-9]+$', GA_ID or ''):
+        return ''
+    return ('<script async src="https://www.googletagmanager.com/gtag/js?id=%s"></script><script>window.dataLayer=window.dataLayer||[];'
+            'function gtag(){dataLayer.push(arguments);}gtag(\'js\',new Date());gtag(\'config\',\'%s\');</script>') % (GA_ID, GA_ID)
+
+def weather_box(strip=False):
+    """Northeast capitals weather; numbers are filled in by script.js from Open-Meteo."""
+    items = ''.join('<li data-i="%d"><span class="wx-city">%s<small>%s</small></span><span class="wx-ic" aria-hidden="true"></span><span class="wx-t">--&deg;</span><span class="wx-hl"></span></li>' % (k, c, st) for k, (c, st, _, _) in enumerate(NE_CAPITALS))
+    data = ' data-wx="%s"' % esc(json.dumps([[la, lo] for (_, _, la, lo) in NE_CAPITALS]))
+    if strip:
+        return '<div class="wx-strip" role="region" aria-label="Weather in Northeast capitals"%s><div class="wrap wx-strip-in"><span class="wx-lab">Weather</span><ul class="wx-list">%s</ul></div></div>' % (data, items)
+    return '<section class="wx-box" aria-label="Weather in Northeast capitals"%s>%s<ul class="wx-list">%s</ul><p class="wx-note">Loading weather&hellip;</p></section>' % (data, sec_title('Northeast Weather'), items)
+
+def share_bar(s, where):
+    u = SITE + '/' + url(s)[:-5]
+    wa = 'https://wa.me/?text=' + quote(s['title'] + ' ' + u, safe='')
+    fb = 'https://www.facebook.com/sharer/sharer.php?u=' + quote(u, safe='')
+    return ('<div class="share share-%s" data-share data-url="%s" data-title="%s"><span class="share-lab">Share this story</span><div class="share-btns">'
+            '<a class="sh sh-wa" href="%s" target="_blank" rel="noopener" aria-label="Share on WhatsApp">%s<span>WhatsApp</span></a>'
+            '<a class="sh sh-st" href="%s" target="_blank" rel="noopener" data-native aria-label="Share to WhatsApp Status">%s<span>Status</span></a>'
+            '<a class="sh sh-fb" href="%s" target="_blank" rel="noopener" aria-label="Share on Facebook">%s<span>Facebook</span></a>'
+            '<button class="sh sh-cp" type="button" data-copy aria-label="Copy link">%s<span>Copy link</span></button></div></div>') % (
+            where, esc(u), esc(s['title']), esc(wa), WA_SVG, esc(wa), WA_SVG, esc(fb), FB_SVG, LINK_SVG)
 
 def sec_title(t, href=None):
     more = ' <a class="more" href="%s">More &rsaquo;</a>' % href if href else ''
@@ -238,8 +318,8 @@ def build_index(stories, ctx):
         h = 'h1' if k == 0 else 'h2'
         lazy = '' if k == 0 else ' loading="lazy" decoding="async"'
         sl.append(('<article class="lead ls-slide" role="group" aria-roledescription="slide" aria-label="%d of %d"><a href="%s" class="card-link"%s><div class="thumb"><img src="%s" alt="%s" width="1200" height="675"%s></div>'
-          '<div class="lead-body"><div class="meta-top"><span class="kicker">%s</span>%s</div><%s>%s</%s><p class="dek">%s</p><time datetime="%s">%s</time></div></a></article>') % (
-          k + 1, n, url(s), '' if k == 0 else ' tabindex="-1"', esc(s['img']), esc(s['title']), lazy, s['cat'], badge(s), h, esc(s['title']), h, esc(s['summary']), iso(s), fdate(s)))
+          '<div class="lead-body"><div class="meta-top"><span class="kicker">%s</span>%s</div><%s>%s</%s><time datetime="%s">%s</time></div></a></article>') % (
+          k + 1, n, url(s), '' if k == 0 else ' tabindex="-1"', esc(s['img']), esc(s['title']), lazy, s['cat'], badge(s), h, esc(s['title']), h, iso(s), fdate(s)))
     if n > 1:
         dots = ''.join('<button type="button" aria-label="Story %d"%s></button>' % (k + 1, ' aria-current="true"' if k == 0 else '') for k in range(n))
         leadhtml = ('<div class="lead-slider" data-slider role="region" aria-roledescription="carousel" aria-label="Lead stories">'
@@ -265,13 +345,41 @@ def build_index(stories, ctx):
         else:
             body = '<div class="grid %s">%s</div>' % ('g3' if len(lst) >= 3 else 'g2', ''.join(card(s) for s in lst[:3]))
         main_col.append('<section class="block">%s%s</section>' % (sec_title(c, c.lower() + '.html'), body))
-    parts.append('<div class="two-col"><div class="col-main">%s</div><aside class="col-side">%s%s</aside></div>' % (''.join(main_col), trending(ctx), follow_box()))
-    return page('Mirror Lilong | Latest news from Lilong, Manipur and the Northeast', 'Mirror Lilong brings the latest news from Lilong, Manipur, the Northeast, India and the world.', 'Home', ''.join(parts), ctx, lead['img'])
+    parts.append('<div class="two-col"><div class="col-main">%s</div><aside class="col-side">%s%s%s</aside></div>' % (''.join(main_col), weather_box(), trending(ctx), follow_box()))
+    return page('Mirror Lilong | Latest news from Lilong, Manipur and the Northeast', 'Mirror Lilong brings the latest news from Lilong, Manipur, the Northeast, India and the world.', 'Home', ''.join(parts), ctx, lead['img'], strip=weather_box(True))
 
 def bycat(stories, c): return [s for s in stories if s['cat'] == c or s.get('also_in') == c]
 
+def bystate(stories, st): return [s for s in stories if st in s.get('states', [])]
+
+def state_chips(stories, current=None):
+    chips = ['<a href="northeast.html"%s>All</a>' % (' aria-current="page"' if current is None else '')]
+    for x in NE_NAMES:
+        chips.append('<a href="%s"%s>%s <span>%d</span></a>' % (state_page(x), ' aria-current="page"' if x == current else '', x, len(bystate(stories, x))))
+    return '<nav class="chips" aria-label="Northeast states">%s</nav>' % ''.join(chips)
+
+def story_grid(lst):
+    first = '<div class="grid g-feature">%s<div class="stack">%s</div></div>' % (card(lst[0], 'l', True), ''.join(card(s, 's') for s in lst[1:4]))
+    rest = '<div class="grid g3">%s</div>' % ''.join(card(s, 'm', True) for s in lst[4:]) if len(lst) > 4 else ''
+    return first + rest
+
+def build_state(stories, st, ctx):
+    lst = bystate(stories, st)
+    n = len(lst)
+    body = story_grid(lst) if lst else ('<div class="empty-state"><p class="es-big">No stories from %s yet.</p><p>New stories will show up here as soon as they are posted. Meanwhile, catch up on <a href="northeast.html">all Northeast news</a>.</p></div>' % st)
+    main = ('<nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> &rsaquo; <a href="northeast.html">Northeast</a> &rsaquo; %s</nav>'
+            '<div class="cat-head cat-head-sub"><h1>%s</h1><p>%d %s</p></div>%s<div class="two-col"><div class="col-main">%s</div><aside class="col-side">%s%s%s</aside></div>') % (
+            st, st, n, 'story' if n == 1 else 'stories', state_chips(stories, st), body, weather_box(), trending(ctx), follow_box())
+    return page('%s News | Northeast | Mirror Lilong' % st, 'Latest news from %s on Mirror Lilong.' % st, 'Northeast', main, ctx, strip=weather_box(True))
+
 def build_cat(stories, c, ctx):
     lst = bycat(stories, c)
+    if c == 'Northeast':
+        n = len(lst)
+        body = story_grid(lst) if lst else '<p class="note">No stories in this section yet.</p>'
+        main = '<div class="cat-head"><h1>%s</h1><p>%d %s</p></div>%s<div class="two-col"><div class="col-main">%s</div><aside class="col-side">%s%s%s</aside></div>' % (
+            c, n, 'story' if n == 1 else 'stories', state_chips(stories), body, weather_box(), trending(ctx), follow_box())
+        return page('%s News | Mirror Lilong' % c, 'Latest %s news from Mirror Lilong.' % c, c, main, ctx, strip=weather_box(True))
     if lst:
         first = '<div class="grid g-feature">%s<div class="stack">%s</div></div>' % (card(lst[0], 'l', True), ''.join(card(s, 's') for s in lst[1:4]))
         rest = '<div class="grid g3">%s</div>' % ''.join(card(s, 'm', True) for s in lst[4:]) if len(lst) > 4 else ''
@@ -315,10 +423,10 @@ def build_article(stories, s, ctx):
     by = 'Mirror Lilong Desk' if s.get('desk') else 'Mirror Lilong News Desk'
     dek = '<p class="art-dek">%s</p>' % esc(s['summary']) if s['summary'] else ''
     main = ('<div class="two-col article-wrap"><article class="article"><nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> &rsaquo; <a href="%s">%s</a></nav>'
-          '<h1>%s</h1>%s<div class="art-meta"><span class="by">%s</span>%s<time datetime="%s">%s</time></div>%s'
-          '<div class="art-body">%s</div>%s<p class="back"><a href="index.html">&lsaquo; Back to home</a></p></article>'
-          '<aside class="col-side">%s%s</aside></div>%s') % (s['cat'].lower() + '.html', s['cat'], esc(s['title']), dek, by, badge(s), iso(s), fdate(s), fig,
-          markdown(s.get('body')), srcs, trending(ctx, s), follow_box(), rel)
+          '<h1>%s</h1>%s<div class="art-meta"><span class="by">%s</span>%s<time datetime="%s">%s</time></div>%s%s'
+          '<div class="art-body">%s</div>%s%s<p class="back"><a href="index.html">&lsaquo; Back to home</a></p></article>'
+          '<aside class="col-side">%s%s</aside></div>%s') % (s['cat'].lower() + '.html', s['cat'], esc(s['title']), dek, by, badge(s), iso(s), fdate(s), share_bar(s, 'top'), fig,
+          markdown(s.get('body')), srcs, share_bar(s, 'end'), trending(ctx, s), follow_box(), rel)
     return page('%s | Mirror Lilong' % s['title'], s['summary'] or s['title'], s['cat'], main, ctx, s['img'])
 
 # ---------- About / Contact / Privacy / Terms ----------
@@ -382,6 +490,17 @@ def build_info(ctx):
         ('terms.html', info_page('Terms of Use | Mirror Lilong', 'Terms of use and disclaimer for mirrorlilong.com.', 'Terms of Use', terms, ctx)),
     ]
 
+def build_search(ctx):
+    main = ('<div class="cat-head"><h1>Search</h1><p id="srCount"></p></div>'
+            '<form class="sr-form" action="/search" method="get" role="search"><input class="sr-input" id="srInput" type="search" name="q" placeholder="Search Mirror Lilong news" autocomplete="off" enterkeyhint="search" aria-label="Search news"><button type="submit">Search</button></form>'
+            '<div class="two-col"><div class="col-main"><div id="srResults" class="sr-results" aria-live="polite"><noscript><p class="note">Search needs JavaScript turned on.</p></noscript></div></div><aside class="col-side">%s%s</aside></div>') % (trending(ctx), follow_box())
+    return page('Search | Mirror Lilong', 'Search all Mirror Lilong news stories.', None, main, ctx)
+
+def search_index(stories):
+    return json.dumps([{'t': s['title'], 's': s['summary'], 'c': s['cat'], 'a': s.get('also_in') or '', 'st': s.get('states', []),
+                        'd': iso(s), 'df': fdate(s), 'u': '/' + url(s)[:-5], 'i': s['img'] if s['img'].startswith('http') else '/' + s['img']} for s in stories],
+                      ensure_ascii=False, separators=(',', ':'))
+
 def main():
     stories = load_stories()
     if not stories:
@@ -407,6 +526,11 @@ def main():
     for c in CATS:
         w(c.lower() + '.html', build_cat(stories, c, ctx))
     w('videos.html', build_videos(stories, videos, ctx))
+    for st in NE_NAMES:
+        w(state_page(st), build_state(stories, st, ctx))
+    w('search.html', build_search(ctx))
+    with open(os.path.join(OUT, 'search.json'), 'w', encoding='utf-8') as f:
+        f.write(search_index(stories))
     for name, text in build_info(ctx):
         w(name, text)
     with open(os.path.join(OUT, 'ads.txt'), 'w', encoding='utf-8') as f:

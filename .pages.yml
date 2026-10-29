@@ -47,6 +47,12 @@ content:
         type: select
         options:
           values: [Manipur, Northeast, India, World, Sports, Entertainment]
+      - name: state
+        label: State (Northeast)
+        description: Optional. Puts the story on that state's page under Northeast.
+        type: select
+        options:
+          values: [Arunachal Pradesh, Assam, Manipur, Meghalaya, Mizoram, Nagaland, Tripura]
       - name: summary
         label: Short summary (1-2 lines under the headline)
         type: text
