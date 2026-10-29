@@ -321,6 +321,9 @@ def main():
         shutil.rmtree(OUT)
     shutil.copytree(STATIC, OUT, ignore=shutil.ignore_patterns('.gitkeep', '.DS_Store'))
     def w(name, text):
+        # clean URLs: home -> '/', other pages without '.html' (GitHub Pages serves both)
+        text = re.sub(r'href="index\.html"', 'href="/"', text)
+        text = re.sub(r'href="([a-z0-9][a-z0-9-]*)\.html"', r'href="/\1"', text)
         with open(os.path.join(OUT, name), 'w', encoding='utf-8') as f:
             f.write(text)
     w('index.html', build_index(stories, ctx))
