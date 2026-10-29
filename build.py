@@ -340,9 +340,9 @@ def build_info(ctx):
         '<p>Have a story, a correction or a question? See our <a href="contact.html">Contact</a> page.</p>')
     contact = (
         '<p>We would love to hear from you, whether you have a news tip, a correction, a question about a story, or an advertising enquiry.</p>'
-        '<h2>Message us</h2><p>The fastest way to reach the Mirror Lilong team is to send us a message on our %s. We read every message.</p>'
+        '<h2>Email us</h2><p><b>Email:</b> <a href="mailto:mirrorlilong@gmail.com">mirrorlilong@gmail.com</a></p><h2>Message us</h2><p>You can also send us a message on our %s. We read every message.</p>'
         '<ul><li>Facebook: %s</li><li>Instagram: %s</li><li>YouTube: %s</li></ul>'
-        '<h2>Corrections</h2><p>If you think something in one of our stories is wrong, message us on Facebook with the story link and what needs fixing. We will check it and correct the story if needed.</p>'
+        '<h2>Corrections</h2><p>If you think something in one of our stories is wrong, email us or message us on Facebook with the story link and what needs fixing. We will check it and correct the story if needed.</p>'
         '<h2>News tips</h2><p>Seen something in Lilong or anywhere in Manipur that people should know about? Send us the details, and photos or videos if you have them.</p>'
         '<p>Based in Lilong, Manipur, India.</p>') % (fb, ext(FBPAGE, 'facebook.com/mirrorlilong'), ext(IG, '@mirrorlilong'), ext(YT, '@teammirrormanipur'))
     privacy = (
@@ -363,7 +363,7 @@ def build_info(ctx):
         '<h2>Your choices</h2><p>You can control cookies through your browser settings and the opt-out links above. If you have contacted us and want us to delete your messages or any information you sent us, let us know.</p>'
         '<h2>Changes to this policy</h2><p>We may update this policy from time to time. The date at the top shows when it was last changed.</p>'
         '<h2>Governing law</h2><p>This policy is governed by the laws of India.</p>'
-        '<h2>Contact</h2><p>For any questions about this Privacy Policy, message us on our %s or see our <a href="contact.html">Contact</a> page.</p>') % fb
+        '<h2>Contact</h2><p>For any questions about this Privacy Policy, email us at <a href="mailto:mirrorlilong@gmail.com">mirrorlilong@gmail.com</a> or message us on our %s or see our <a href="contact.html">Contact</a> page.</p>') % fb
     terms = (
         '<p><i>Last updated: 29 October 2026</i></p>'
         '<p>By using mirrorlilong.com (the &ldquo;Site&rdquo;) you agree to these terms. If you do not agree, please do not use the Site.</p>'
@@ -374,7 +374,7 @@ def build_info(ctx):
         '<h2>Liability</h2><p>To the extent allowed by law, Mirror Lilong is not liable for any loss or damage arising from the use of the Site or reliance on its content.</p>'
         '<h2>Changes</h2><p>We may update these terms at any time. The date at the top shows when they were last changed.</p>'
         '<h2>Governing law</h2><p>These terms are governed by the laws of India.</p>'
-        '<h2>Contact</h2><p>Questions about these terms? Message us on our %s or see our <a href="contact.html">Contact</a> page.</p>') % fb
+        '<h2>Contact</h2><p>Questions about these terms? Email us at <a href="mailto:mirrorlilong@gmail.com">mirrorlilong@gmail.com</a> or message us on our %s or see our <a href="contact.html">Contact</a> page.</p>') % fb
     return [
         ('about.html', info_page('About Us | Mirror Lilong', 'About Mirror Lilong, independent local news from Lilong and Manipur.', 'About Mirror Lilong', about, ctx)),
         ('contact.html', info_page('Contact Us | Mirror Lilong', 'How to contact the Mirror Lilong team with news tips, corrections and questions.', 'Contact Us', contact, ctx)),
