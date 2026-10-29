@@ -231,9 +231,24 @@ def flagged(stories, flag, n, exclude=()):
 
 def build_index(stories, ctx):
     lead = ctx['lead']
-    leadhtml = ('<article class="lead"><a href="%s" class="card-link"><div class="thumb"><img src="%s" alt="%s" width="1200" height="675"></div>'
-      '<div class="lead-body"><div class="meta-top"><span class="kicker">%s</span>%s</div><h1>%s</h1><p class="dek">%s</p><time datetime="%s">%s</time></div></a></article>') % (
-      url(lead), esc(lead['img']), esc(lead['title']), lead['cat'], badge(lead), esc(lead['title']), esc(lead['summary']), iso(lead), fdate(lead))
+    slides = ctx.get('slides') or [lead]
+    n = len(slides)
+    sl = []
+    for k, s in enumerate(slides):
+        h = 'h1' if k == 0 else 'h2'
+        lazy = '' if k == 0 else ' loading="lazy" decoding="async"'
+        sl.append(('<article class="lead ls-slide" role="group" aria-roledescription="slide" aria-label="%d of %d"><a href="%s" class="card-link"%s><div class="thumb"><img src="%s" alt="%s" width="1200" height="675"%s></div>'
+          '<div class="lead-body"><div class="meta-top"><span class="kicker">%s</span>%s</div><%s>%s</%s><p class="dek">%s</p><time datetime="%s">%s</time></div></a></article>') % (
+          k + 1, n, url(s), '' if k == 0 else ' tabindex="-1"', esc(s['img']), esc(s['title']), lazy, s['cat'], badge(s), h, esc(s['title']), h, esc(s['summary']), iso(s), fdate(s)))
+    if n > 1:
+        dots = ''.join('<button type="button" aria-label="Story %d"%s></button>' % (k + 1, ' aria-current="true"' if k == 0 else '') for k in range(n))
+        leadhtml = ('<div class="lead-slider" data-slider role="region" aria-roledescription="carousel" aria-label="Lead stories">'
+          '<div class="ls-track">%s</div>'
+          '<button type="button" class="ls-arrow ls-prev" aria-label="Previous story">&lsaquo;</button>'
+          '<button type="button" class="ls-arrow ls-next" aria-label="Next story">&rsaquo;</button>'
+          '<div class="ls-dots">%s</div></div>') % (''.join(sl), dots)
+    else:
+        leadhtml = sl[0].replace(' ls-slide" role="group" aria-roledescription="slide" aria-label="1 of 1"', '"')
     top = ''.join('<li><a href="%s"><span class="kicker">%s</span>%s</a></li>' % (url(s), s['cat'], esc(s['title'])) for s in ctx['top'])
     desk = [s for s in stories if s.get('desk') and s is not lead][:4]
     parts = ['<div class="hero-grid">%s<aside class="top-list"><h2 class="sec-title"><span>Top Stories</span></h2><ul>%s</ul></aside></div>' % (leadhtml, top)]
@@ -312,9 +327,10 @@ def main():
         sys.exit('No stories found in content/stories/')
     videos = load_videos()
     now = datetime.datetime.now(IST)
-    lead = next((s for s in stories if s.get('lead')), stories[0])
-    ctx = dict(today=now.strftime('%A, ') + str(now.day) + now.strftime(' %B %Y'), year=now.year, lead=lead)
-    ctx['top'] = flagged(stories, 'top', 5, exclude=(lead,))
+    slides = flagged(stories, 'lead', 5)  # homepage slider: 5 newest lead stories, topped up with newest others
+    lead = slides[0]
+    ctx = dict(today=now.strftime('%A, ') + str(now.day) + now.strftime(' %B %Y'), year=now.year, lead=lead, slides=slides)
+    ctx['top'] = flagged(stories, 'top', 5, exclude=tuple(slides))
     ctx['tick'] = flagged(stories, 'breaking', 7)
     ctx['trend'] = flagged(stories, 'trending', 8)
     if os.path.isdir(OUT):
