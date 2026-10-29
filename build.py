@@ -22,7 +22,7 @@ CATS = ['Manipur', 'Northeast', 'India', 'World', 'Sports', 'Entertainment']
 NAV = [('Home', 'index.html')] + [(c, c.lower() + '.html') for c in CATS] + [('Videos', 'videos.html')]
 SITE = 'https://mirrorlilong.com'  # used for share links
 # Google Analytics: paste a measurement id like "G-XXXXXXXXXX" here and every page gets the gtag snippet.
-GA_ID = ""
+GA_ID = "G-EVK542T9WM"
 
 SEARCH_SVG = '<svg class="ic-s" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'
 CLOSE_SVG = '<svg class="ic-x" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'
@@ -465,7 +465,7 @@ def build_info(ctx):
         '<li>You may opt out of personalised advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener">Google Ads Settings</a>. You can also opt out of some third-party vendors&rsquo; use of cookies for personalised advertising at <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener">www.aboutads.info</a>.</li>'
         '<li>To learn how Google uses information from sites that use its services, see <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">How Google uses cookies in advertising</a> and <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">How Google uses information from sites or apps that use its services</a>.</li></ul>'
         '<p>If you do not opt out, you may still see ads, but they will not be personalised. You can also block or delete cookies in your browser settings; some parts of the Site may then work differently.</p>'
-        '<h2>Analytics</h2><p>We do not currently use any analytics or visitor-tracking service on the Site. If we add one in the future, we will update this policy.</p>'
+        '<h2>Analytics</h2><p>We use Google Analytics to understand how many people visit the Site and which pages they read. Google Analytics uses cookies to collect information such as the pages you visit, how long you stay, the type of device and browser you use, and your approximate location (city or region). This information is collected in aggregate and is not used to identify you personally. Learn more at <a href="https://policies.google.com/technologies/partner-sites" rel="noopener" target="_blank">How Google uses information from sites that use its services</a>. You can opt out of Google Analytics with the <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener" target="_blank">Google Analytics opt-out browser add-on</a>.</p>'
         '<h2>Links to other websites</h2><p>Our stories link to other websites, such as the publishers that first reported a story, and to our social media pages. We are not responsible for the content or privacy practices of those sites.</p>'
         '<h2>Children</h2><p>The Site is a general news site and is not directed at children under 13. We do not knowingly collect personal information from children.</p>'
         '<h2>Your choices</h2><p>You can control cookies through your browser settings and the opt-out links above. If you have contacted us and want us to delete your messages or any information you sent us, let us know.</p>'
