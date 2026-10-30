@@ -30,6 +30,7 @@ jobs:
           URL: https://mirrorlilong.com
         run: |
           python3 build.py
+          python3 translate_inject.py || echo "translations step failed; site published without language switch"
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
