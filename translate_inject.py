@@ -59,8 +59,39 @@ DEFAULT_DISC = {'en': 'This translation was done automatically using AI and may 
 
 def log(msg): print('translations: ' + msg)
 def esc(s): return html.escape(s, quote=False)
-def body_html(text):
-    return ''.join('<p>%s</p>' % esc(p.strip()) for p in text.split('\n\n') if p.strip())
+PHOTO_RE = re.compile(r'^\[\s*photo\s*(\d+)\s*\]$', re.I)
+MDIMG_RE = re.compile(r'^!\[([^\]\n]*)\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"\n]*")?\s*\)$')
+FIG_RE = re.compile(r'<figure class="art-fig art-photo[^"]*" data-photo="([^"]*)">.*?</figure>', re.S)
+
+def asset(p):  # same rule as build.py asset()
+    p = str(p or '').strip()
+    if p.startswith(('http://', 'https://')): return p
+    p = p.lstrip('/')
+    return p[len('static/'):] if p.startswith('static/') else p
+
+def page_figures(body):
+    """In-story photo figures build.py put in the English story text: [(key, html)] in page order."""
+    return [(html.unescape(m.group(1)), m.group(0)) for m in FIG_RE.finditer(body)]
+
+def body_html(text, figs=()):
+    """Translated paragraphs as HTML. A paragraph that is just [photoN] (or a ![caption](link) line)
+    becomes the same photo as on the English page; photos the translation does not mention go at the end."""
+    figd = dict(figs); used = set(); out = []
+    for p in text.split('\n\n'):
+        p = p.strip()
+        if not p: continue
+        key = None
+        m = PHOTO_RE.match(p)
+        if m: key = str(int(m.group(1)))
+        else:
+            m = MDIMG_RE.match(p)
+            if m: key = 'img:' + asset(m.group(2))
+        if key is not None:
+            if key in figd and key not in used: out.append(figd[key]); used.add(key)
+            continue
+        out.append('<p>%s</p>' % esc(p))
+    out.extend(h for k, h in figs if k not in used)
+    return ''.join(out)
 def cls(code): return {'mni-Mtei': ' f-mtei', 'mni-Beng': ' f-beng', 'hi': ' f-deva'}.get(code, '')
 
 def bar(disc, langs):
@@ -82,13 +113,14 @@ var saved=null;try{saved=localStorage.getItem(K)}catch(e){}if(saved&&saved!=='en
 
 def inject(page, d, disc):
     if 'data-has-tr' in page: return None  # already done (idempotent)
+    figs = page_figures(page)  # only story-text photos carry class art-photo + data-photo
     t = {}
     for c, _, _, _ in LANGS:
         if c == 'en': continue
         x = d.get(c)
         if isinstance(x, dict) and isinstance(x.get('title'), str) and isinstance(x.get('body'), str) and x['title'].strip() and x['body'].strip():
             summ = x.get('summary') if isinstance(x.get('summary'), str) else ''
-            t[c] = {'title': x['title'].strip(), 'summary': summ.strip(), 'body': body_html(x['body'])}
+            t[c] = {'title': x['title'].strip(), 'summary': summ.strip(), 'body': body_html(x['body'], figs)}
     if not t: return None
     langs = [L for L in LANGS if L[0] == 'en' or L[0] in t]
     m = re.search(r'<article class="article">(.*?)</article>', page, flags=re.S)

@@ -67,9 +67,21 @@ content:
         default: "Image: Mirror Lilong"
       - name: body
         label: Story text
-        description: Leave an empty line between paragraphs.
+        description: Leave an empty line between paragraphs. To show a photo from "More photos", type [photo1], [photo2]... on its own line.
         type: text
         required: true
+      - name: photos
+        label: More photos (optional)
+        description: Upload extra photos. In Story text, type [photo1], [photo2]... on its own line where each should appear. Photos without a marker show at the end.
+        type: object
+        list: true
+        fields:
+          - name: image
+            label: Photo
+            type: image
+          - name: caption
+            label: Caption (optional)
+            type: string
       - name: facebook
         label: Facebook post link (optional)
         description: Adds a "Read on Facebook" link.

@@ -152,13 +152,20 @@ def inline(t):
     t = t.replace('\\\n', '<br>').replace('  \n', '<br>').replace('\n', ' ')
     return t
 
-def markdown(text):
+def markdown(text, fig=None):
+    """fig: optional callback for in-story photos; given a stripped block, returns figure HTML
+    ('' = render nothing) or None (not a photo block, render as usual)."""
     text = str(text or '').replace('\r\n', '\n').replace('\u00a0', ' ').strip()
     out = []
     for block in re.split(r'\n\s*\n', text):
         block = block.strip('\n')
         if not block.strip():
             continue
+        if fig is not None:
+            f = fig(block.strip())
+            if f is not None:
+                if f: out.append(f)
+                continue
         lines = block.split('\n')
         m = re.match(r'^(#{1,6})\s+(.*)$', block.strip())
         if m and len(lines) == 1:
@@ -172,6 +179,61 @@ def markdown(text):
             out.append('<blockquote><p>%s</p></blockquote>' % inline('\n'.join(re.sub(r'^\s*>\s?', '', l) for l in lines))); continue
         out.append('<p>%s</p>' % inline(block))
     return ''.join(out)
+
+# ---------- in-story photos ("More photos" in the admin panel) ----------
+# In Story text, a paragraph that is just [photo1] / [Photo 2] shows that photo from the story's
+# "photos" list (1 = first). A paragraph that is just ![caption](image-link) works too.
+# Photos never referenced by a marker are shown after the story text, in order.
+PHOTO_RE = re.compile(r'^\[\s*photo\s*(\d+)\s*\]$', re.I)
+MDIMG_RE = re.compile(r'^!\[([^\]\n]*)\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"\n]*")?\s*\)$')
+
+def story_photos(s):
+    """The story's photos list as [(img-path or '', caption)], keeping positions (1-based markers)."""
+    out = []
+    for x in (s.get('photos') or []) if isinstance(s.get('photos'), list) else []:
+        if isinstance(x, dict):
+            img, cap = x.get('image'), x.get('caption')
+        else:
+            img, cap = x, ''
+        img = asset(img) if isinstance(img, str) and img.strip() else ''
+        out.append((img, cap.strip() if isinstance(cap, str) else ''))
+    return out
+
+def photo_figure(img, cap, alt, key):
+    if not img or not re.match(r'^(https?://[^\s"<>]+|[\w./%-]+)$', img) or '..' in img:
+        return ''
+    size = image_size(img) if not img.startswith('http') else None
+    tall = bool(size) and size[1] > size[0]
+    wh = ' width="%d" height="%d"' % size if size else ''
+    capt = '<figcaption>%s</figcaption>' % inline(cap) if cap else ''
+    return '<figure class="art-fig art-photo%s" data-photo="%s"><img src="%s" loading="lazy" alt="%s"%s>%s</figure>' % (
+        ' fbcard' if tall else '', esc(key), esc(img), esc(cap or alt), wh, capt)
+
+def article_body(s):
+    """Story text as HTML with in-story photos; plain markdown() when the story has none."""
+    photos = story_photos(s)
+    body = s.get('body')
+    used = set()
+    def fig(block):
+        m = PHOTO_RE.match(block)
+        if m:
+            n = int(m.group(1))
+            if 1 <= n <= len(photos):
+                used.add(n)
+                return photo_figure(photos[n - 1][0], photos[n - 1][1], s['title'], str(n))
+            return ''
+        m = MDIMG_RE.match(block)
+        if m:
+            u = m.group(2).strip()
+            img = asset(u)
+            for i, (p, _) in enumerate(photos, 1):  # same image as an uploaded photo: count it as used
+                if p and p == img:
+                    used.add(i)
+            return photo_figure(img, m.group(1).strip(), s['title'], 'img:' + img)
+        return None
+    html_ = markdown(body, fig)
+    rest = ''.join(photo_figure(p, c, s['title'], str(i)) for i, (p, c) in enumerate(photos, 1) if i not in used)
+    return html_ + rest
 
 # ---------- image size (jpeg/png/webp/gif) ----------
 def image_size(rel):
@@ -453,7 +515,7 @@ def build_article(stories, s, ctx):
           '<h1>%s</h1>%s<div class="art-meta"><span class="by">%s</span>%s<time datetime="%s">%s</time></div>%s%s'
           '<div class="art-body">%s</div>%s%s<p class="back"><a href="index.html">&lsaquo; Back to home</a></p></article>'
           '<aside class="col-side">%s%s</aside></div>%s') % (s['cat'].lower() + '.html', s['cat'], esc(s['title']), dek, by, badge(s), iso(s), fdate(s), share_bar(s, 'top'), fig,
-          markdown(s.get('body')), srcs, share_bar(s, 'end'), trending(ctx, s), follow_box(), rel)
+          article_body(s), srcs, share_bar(s, 'end'), trending(ctx, s), follow_box(), rel)
     return page('%s | Mirror Lilong' % s['title'], s['summary'] or s['title'], s['cat'], main, ctx, s['img'])
 
 # ---------- About / Contact / Privacy / Terms ----------
