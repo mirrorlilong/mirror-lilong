@@ -14,6 +14,9 @@ Translation file shape (translations/<slug>.json, UTF-8):
    "mni-Beng": {...},               # Manipuri in Bengali script
    "hi":       {...},               # Hindi
    "_meta":    {...optional notes...}}
+Optional per language: "captions": ["...", "..."] — translated text of the story's photo captions, same order
+as the story's "photos" list ("" or missing = keep the English caption). A long caption (story text typed
+under a photo) is shown as normal story paragraphs, exactly like build.py does for the English.
 A language missing or without a title+body is simply not offered. English on the page always comes
 from the story itself (content/stories), so edits to the English post show up as usual.
 """
@@ -73,6 +76,53 @@ def page_figures(body):
     """In-story photo figures build.py put in the English story text: [(key, html)] in page order."""
     return [(html.unescape(m.group(1)), m.group(0)) for m in FIG_RE.finditer(body)]
 
+def inline(t):  # same as build.py inline(): the small markdown a caption can carry
+    t = esc(t)
+    def link(m):
+        u = m.group(2).strip()
+        if not re.match(r'^(https?://|mailto:|/|#|[\w.-]+\.html)', u):
+            return m.group(0)
+        ext = u.startswith('http')
+        return '<a href="%s"%s>%s</a>' % (u.replace('"', '&quot;'), ' target="_blank" rel="noopener"' if ext else '', m.group(1))
+    t = re.sub(r'\[([^\]]+)\]\(([^)\s]+)\)', link, t)
+    t = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', t)
+    t = re.sub(r'__(.+?)__', r'<b>\1</b>', t)
+    t = re.sub(r'(?<![\w*])\*(?!\s)(.+?)(?<!\s)\*(?![\w*])', r'<i>\1</i>', t)
+    t = re.sub(r'(?<![\w_])_(?!\s)(.+?)(?<!\s)_(?![\w_])', r'<i>\1</i>', t)
+    t = t.replace('\\\n', '<br>').replace('  \n', '<br>').replace('\n', ' ')
+    return t
+
+FIG_IMG_RE = re.compile(r'<img src="([^"]*)" loading="lazy" alt="[^"]*"((?: width="\d+" height="\d+")?)>')
+def caption_figure(fig, key, cap, title):
+    """The English figure for photo `key` re-rendered with a translated caption, same markup and the same
+    short/long rule as build.py photo_figure() (a caption that was long in English stays long)."""
+    m = FIG_IMG_RE.search(fig)
+    if not m: return fig
+    src, wh = m.group(1), m.group(2)
+    head = fig[:fig.index('>')]
+    tall = 'fbcard' in head or 'ph-tall' in fig
+    paras = [p.strip() for p in re.split(r'\n\s*\n|\n|\s{2,}', cap) if p.strip()]
+    if len(cap) > 160 or len(paras) > 1 or 'art-photo-long' in head:
+        body = ''.join('<p>%s</p>' % inline(p) for p in paras)
+        return ('<figure class="art-fig art-photo art-photo-long" data-photo="%s"><div class="ph-frame%s"><img src="%s" loading="lazy" alt="%s"%s></div>'
+                '<div class="photo-text">%s</div></figure>') % (html.escape(key), ' ph-tall' if tall else '', src, html.escape(title), wh, body)
+    return '<figure class="art-fig art-photo%s" data-photo="%s"><img src="%s" loading="lazy" alt="%s"%s><figcaption>%s</figcaption></figure>' % (
+        ' fbcard' if tall else '', html.escape(key), src, html.escape(cap), wh, inline(cap))
+
+def lang_figures(figs, caps, title, code):
+    """figs with each uploaded photo's caption swapped for the translation, where one is given."""
+    if not isinstance(caps, list) or not any(isinstance(c, str) and c.strip() for c in caps): return figs
+    out = []
+    for k, h in figs:
+        try:
+            i = int(k) - 1 if k.isdigit() else -1
+            c = caps[i] if 0 <= i < len(caps) else None
+            if isinstance(c, str) and c.strip(): h = caption_figure(h, k, c.strip(), title)
+        except Exception as e:
+            log('%s caption %s kept in English (%s)' % (code, k, e))
+        out.append((k, h))
+    return out
+
 def body_html(text, figs=()):
     """Translated paragraphs as HTML. A paragraph that is just [photoN] (or a ![caption](link) line)
     becomes the same photo as on the English page; photos the translation does not mention go at the end."""
@@ -120,7 +170,7 @@ def inject(page, d, disc):
         x = d.get(c)
         if isinstance(x, dict) and isinstance(x.get('title'), str) and isinstance(x.get('body'), str) and x['title'].strip() and x['body'].strip():
             summ = x.get('summary') if isinstance(x.get('summary'), str) else ''
-            t[c] = {'title': x['title'].strip(), 'summary': summ.strip(), 'body': body_html(x['body'], figs)}
+            t[c] = {'title': x['title'].strip(), 'summary': summ.strip(), 'body': body_html(x['body'], lang_figures(figs, x.get('captions'), x['title'].strip(), c))}
     if not t: return None
     langs = [L for L in LANGS if L[0] == 'en' or L[0] in t]
     m = re.search(r'<article class="article">(.*?)</article>', page, flags=re.S)
