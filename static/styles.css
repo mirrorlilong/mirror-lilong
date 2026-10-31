@@ -362,3 +362,9 @@ time{color:var(--mute);font-size:12.5px}
 .tn-meta{font-size:12px;color:var(--mute)}
 @media (max-width:979px){.tn-img{flex-basis:120px;width:120px}.tn-tt{font-size:15px}}
 @media (prefers-reduced-motion:reduce){.tn-live{animation:none}.tn-img img{transition:none}}
+/* photo with story text under it (long caption) */
+.art-body .art-photo-long{margin:4px 0 0}
+.art-body .art-photo-long .ph-frame{margin-bottom:18px}
+.art-body .art-photo-long .ph-tall{background:#111;padding:10px;border-radius:6px}
+.art-body .art-photo-long .ph-tall img{max-width:460px;margin:0 auto;border-radius:3px}
+.art-body .photo-text p:first-child:first-letter{float:none;font-size:inherit;line-height:inherit;padding:0;font-weight:inherit;color:inherit}

@@ -205,6 +205,12 @@ def photo_figure(img, cap, alt, key):
     size = image_size(img) if not img.startswith('http') else None
     tall = bool(size) and size[1] > size[0]
     wh = ' width="%d" height="%d"' % size if size else ''
+    paras = [p.strip() for p in re.split(r'\n\s*\n|\n|\s{2,}', cap or '') if p.strip()]
+    if cap and (len(cap) > 160 or len(paras) > 1):
+        # Long "caption" = story text typed under this photo: show it as normal story paragraphs.
+        body = ''.join('<p>%s</p>' % inline(p) for p in paras)
+        return ('<figure class="art-fig art-photo art-photo-long" data-photo="%s"><div class="ph-frame%s"><img src="%s" loading="lazy" alt="%s"%s></div>'
+                '<div class="photo-text">%s</div></figure>') % (esc(key), ' ph-tall' if tall else '', esc(img), esc(alt), wh, body)
     capt = '<figcaption>%s</figcaption>' % inline(cap) if cap else ''
     return '<figure class="art-fig art-photo%s" data-photo="%s"><img src="%s" loading="lazy" alt="%s"%s>%s</figure>' % (
         ' fbcard' if tall else '', esc(key), esc(img), esc(cap or alt), wh, capt)

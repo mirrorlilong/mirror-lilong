@@ -80,8 +80,9 @@ content:
             label: Photo
             type: image
           - name: caption
-            label: Caption (optional)
-            type: string
+            label: Caption or story text under this photo (optional)
+            description: A short line shows as a small grey caption. Longer text shows as normal story paragraphs below the photo.
+            type: text
       - name: facebook
         label: Facebook post link (optional)
         description: Adds a "Read on Facebook" link.
