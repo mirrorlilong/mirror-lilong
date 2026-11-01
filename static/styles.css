@@ -368,3 +368,16 @@ time{color:var(--mute);font-size:12.5px}
 .art-body .art-photo-long .ph-tall{background:#111;padding:10px;border-radius:6px}
 .art-body .art-photo-long .ph-tall img{max-width:460px;margin:0 auto;border-radius:3px}
 .art-body .photo-text p:first-child:first-letter{float:none;font-size:inherit;line-height:inherit;padding:0;font-weight:inherit;color:inherit}
+/* WhatsApp Channel: floating pill, bottom-right, every page */
+.wa-ch{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));z-index:30;display:inline-flex;align-items:center;gap:9px;padding:7px 15px 7px 7px;border-radius:999px;background:rgba(17,17,17,.82);-webkit-backdrop-filter:blur(10px) saturate(140%);backdrop-filter:blur(10px) saturate(140%);color:#fff;font-weight:700;font-size:13.5px;line-height:1;letter-spacing:.01em;text-decoration:none;border:1px solid rgba(255,255,255,.14);box-shadow:0 8px 24px rgba(0,0,0,.22),0 1px 3px rgba(0,0,0,.18);opacity:.88;animation:waChIn .6s cubic-bezier(.2,.8,.2,1) 1.5s backwards;transition:background .2s,box-shadow .2s,transform .2s}
+.wa-ch:hover,.wa-ch:focus-visible{background:rgba(17,17,17,.97);box-shadow:0 10px 28px rgba(0,0,0,.3),0 0 0 3px rgba(37,211,102,.28);transform:translateY(-1px);color:#fff}
+.wa-ch:active{transform:scale(.97)}
+.wa-ch-ic{flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+.wa-ch-ic svg{width:18px;height:18px}
+.wa-ch-short{display:none}
+@keyframes waChIn{from{opacity:0;transform:translateY(12px)}}
+.wa-ch:hover,.wa-ch:focus-visible,.wa-ch:active{opacity:1}
+@media (max-width:480px){.wa-ch{font-size:13px;padding:6px 13px 6px 6px;gap:8px;right:max(12px,env(safe-area-inset-right));bottom:calc(14px + env(safe-area-inset-bottom))}.wa-ch-long{display:none}.wa-ch-short{display:inline}.wa-ch-ic{flex-basis:28px;width:28px;height:28px}}
+@media (prefers-reduced-motion:reduce){.wa-ch{animation:none}}
+@media print{.wa-ch{display:none}}
+.follow-btns .wa{background:#1fa855}

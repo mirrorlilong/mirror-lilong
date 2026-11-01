@@ -18,6 +18,7 @@ esc = html.escape
 FBPAGE = 'https://www.facebook.com/100077335757093/'
 IG = 'https://www.instagram.com/mirrorlilong/'
 YT = 'https://www.youtube.com/@teammirrormanipur'
+WA_CH = 'https://whatsapp.com/channel/0029VaVurd6GzzKbrvh1xP3r'  # WhatsApp Channel (floating pill + footer)
 CATS = ['Manipur', 'Northeast', 'India', 'World', 'Sports', 'Entertainment']
 NAV = [('Home', 'index.html')] + [(c, c.lower() + '.html') for c in CATS] + [('Videos', 'videos.html')]
 SITE = 'https://mirrorlilong.com'  # used for share links
@@ -316,11 +317,16 @@ def header(active, ctx):
 def footer(ctx):
     cats = ''.join('<li><a href="%s">%s</a></li>' % (h, n) for n, h in NAV[1:])
     return ('<footer class="footer"><div class="wrap foot-in"><div class="foot-brand"><picture><source srcset="logo-white.webp" type="image/webp"><img src="logo-white.png" alt="Mirror Lilong" width="1200" height="197" loading="lazy"></picture>'
-     '<p>News, interviews and stories from Lilong, Manipur and the Northeast.</p><p class="social">%s &middot; %s &middot; %s</p></div>'
+     '<p>News, interviews and stories from Lilong, Manipur and the Northeast.</p><p class="social">%s &middot; %s &middot; %s &middot; %s</p></div>'
      '<div><h2 class="foot-h">Sections</h2><ul class="foot-list">%s</ul></div>'
      '<div><h2 class="foot-h">About our stories</h2><p class="small">Stories marked <b>Mirror Lilong</b> come from the Mirror Lilong desk. Other stories are short original summaries, and each one links to the publisher that first reported it. Photos are credited on each story.</p></div></div>'
-     '<div class="copy"><div class="wrap copy-in"><span>&copy; %s Mirror Lilong &middot; Imphal, Manipur</span><nav class="foot-legal" aria-label="About Mirror Lilong"><a href="about.html">About</a> &middot; <a href="contact.html">Contact</a> &middot; <a href="privacy-policy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms</a></nav></div></div></footer><script src="script.js" defer></script>') % (
-     ext(FBPAGE, 'Facebook'), ext(IG, 'Instagram'), ext(YT, 'YouTube'), cats, ctx['year'])
+     '<div class="copy"><div class="wrap copy-in"><span>&copy; %s Mirror Lilong &middot; Imphal, Manipur</span><nav class="foot-legal" aria-label="About Mirror Lilong"><a href="about.html">About</a> &middot; <a href="contact.html">Contact</a> &middot; <a href="privacy-policy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms</a></nav></div></div></footer>%s<script src="script.js" defer></script>') % (
+     ext(FBPAGE, 'Facebook'), ext(IG, 'Instagram'), ext(YT, 'YouTube'), ext(WA_CH, 'WhatsApp Channel'), cats, ctx['year'], wa_channel_pill())
+
+def wa_channel_pill():
+    """Floating 'Join our WhatsApp Channel' pill, bottom-right on every page (styles: .wa-ch in styles.css)."""
+    return ('<a class="wa-ch" href="%s" target="_blank" rel="noopener" aria-label="Join the Mirror Lilong WhatsApp Channel">'
+            '<span class="wa-ch-ic">%s</span><span class="wa-ch-t"><span class="wa-ch-long">Join our WhatsApp Channel</span><span class="wa-ch-short">Join Channel</span></span></a>') % (esc(WA_CH), WA_SVG)
 
 def page(title, desc, active, main, ctx, og_img=None, strip=''):
     og = ('<meta property="og:title" content="%s"><meta property="og:description" content="%s"><meta property="og:type" content="website">' % (esc(title), esc(desc)))
@@ -393,9 +399,10 @@ def trending(ctx, exclude=None, n=6):
     return '<section class="trending" aria-label="Trending">%s<ol>%s</ol></section>' % (sec_title('Trending'), items)
 
 def follow_box():
-    return ('<section class="follow">%s<p>Get Lilong and Manipur news as it happens.</p><div class="follow-btns">%s%s%s</div></section>') % (
+    return ('<section class="follow">%s<p>Get Lilong and Manipur news as it happens.</p><div class="follow-btns">%s%s%s%s</div></section>') % (
         sec_title('Follow Mirror Lilong'), '<a class="fb" href="%s" target="_blank" rel="noopener">Facebook</a>' % FBPAGE,
-        '<a class="ig" href="%s" target="_blank" rel="noopener">Instagram</a>' % IG, '<a class="yt" href="%s" target="_blank" rel="noopener">YouTube</a>' % YT)
+        '<a class="ig" href="%s" target="_blank" rel="noopener">Instagram</a>' % IG, '<a class="yt" href="%s" target="_blank" rel="noopener">YouTube</a>' % YT,
+        '<a class="wa" href="%s" target="_blank" rel="noopener">WhatsApp</a>' % WA_CH)
 
 def flagged(stories, flag, n, exclude=()):
     """Newest stories with the flag; topped up with the newest others so the box is never empty."""
