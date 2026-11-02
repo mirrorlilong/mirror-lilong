@@ -336,14 +336,90 @@ def wa_channel_pill():
     return ('<a class="wa-ch" href="%s" target="_blank" rel="noopener" aria-label="Join the Mirror Lilong WhatsApp Channel">'
             '<span class="wa-ch-ic">%s</span><span class="wa-ch-t"><span class="wa-ch-long">Join our WhatsApp Channel</span><span class="wa-ch-short">Join Channel</span></span></a>') % (esc(WA_CH), WA_SVG)
 
-def page(title, desc, active, main, ctx, og_img=None, strip=''):
-    og = ('<meta property="og:title" content="%s"><meta property="og:description" content="%s"><meta property="og:type" content="website">' % (esc(title), esc(desc)))
+def page(title, desc, active, main, ctx, og_img=None, strip='', og_type='website', head=''):
+    og = ('<meta property="og:title" content="%s"><meta property="og:description" content="%s"><meta property="og:type" content="%s"><meta property="og:site_name" content="Mirror Lilong">' % (esc(title), esc(desc), og_type))
     base = os.environ.get('URL', '').rstrip('/')  # Netlify sets URL to the site's address
     if og_img and base:
         og += '<meta property="og:image" content="%s">' % esc(og_img if og_img.startswith('http') else base + '/' + og_img)
     return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
-     '<title>%s</title><meta name="description" content="%s">%s<meta name="theme-color" content="#d7141a"><link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png"><link rel="icon" href="favicon-192.png" sizes="192x192" type="image/png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="stylesheet" href="styles.css"><meta name="google-adsense-account" content="ca-pub-4739495411759158"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4739495411759158" crossorigin="anonymous"></script>%s</head><body>'
-     '%s%s<main id="main" class="wrap">%s</main>%s</body></html>') % (esc(title), esc(desc), og, ga_snippet(), header(active, ctx), strip, main, footer(ctx))
+     '<title>%s</title><meta name="description" content="%s">%s<meta name="theme-color" content="#d7141a"><link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png"><link rel="icon" href="favicon-192.png" sizes="192x192" type="image/png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="stylesheet" href="styles.css"><meta name="google-adsense-account" content="ca-pub-4739495411759158"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4739495411759158" crossorigin="anonymous"></script>%s%s</head><body>'
+     '%s%s<main id="main" class="wrap">%s</main>%s</body></html>') % (esc(title), esc(desc), og, ga_snippet(), head, header(active, ctx), strip, main, footer(ctx))
+
+
+# ---------- SEO: structured data (JSON-LD) for Google Search / News ----------
+LOGO_URL = SITE + '/logo.png'
+SAME_AS = [FBPAGE, IG, YT, WA_CH]
+def abs_url(p):
+    p = str(p or '').strip()
+    if not p:
+        return ''
+    return p if p.startswith(('http://', 'https://')) else SITE + '/' + p.lstrip('/')
+def page_url(name):
+    """Clean public URL of an output file, matching w(): index.html -> /, x.html -> /x."""
+    return SITE + '/' if name == 'index.html' else SITE + '/' + re.sub(r'\.html$', '', name)
+def publisher_ld():
+    return {'@type': 'Organization', 'name': 'Mirror Lilong', 'url': SITE + '/',
+            'logo': {'@type': 'ImageObject', 'url': LOGO_URL, 'width': 1200, 'height': 197}}
+def ld_script(data):
+    return '<script type="application/ld+json">%s</script>' % json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
+def site_ld(home=False):
+    org = dict(publisher_ld(), sameAs=SAME_AS)
+    org['@context'] = 'https://schema.org'
+    if not home:
+        return ld_script(org)
+    org.pop('@context')
+    org['@id'] = SITE + '/#organization'
+    web = {'@type': 'WebSite', '@id': SITE + '/#website', 'name': 'Mirror Lilong', 'url': SITE + '/', 'inLanguage': 'en',
+           'publisher': {'@id': SITE + '/#organization'},
+           'potentialAction': {'@type': 'SearchAction', 'target': {'@type': 'EntryPoint', 'urlTemplate': SITE + '/search?q={search_term_string}'},
+                               'query-input': 'required name=search_term_string'}}
+    return ld_script({'@context': 'https://schema.org', '@graph': [org, web]})
+def ld_headline(t, n=110):
+    t = re.sub(r'\s+', ' ', str(t or '')).strip()
+    if len(t) <= n:
+        return t
+    cut = t[:n - 1].rsplit(' ', 1)[0].rstrip(' ,;:-')
+    return cut + '\u2026'
+def plain(t, n=300):
+    t = re.sub(r'!\[[^\]]*\]\([^)]*\)|\[\s*photo\s*\d+\s*\]', ' ', str(t or ''), flags=re.I)
+    t = re.sub(r'\[([^\]]+)\]\([^)]*\)', r'\1', t)
+    t = re.sub(r'[*_#>`]+', '', t)
+    t = re.sub(r'\s+', ' ', t).strip()
+    return t if len(t) <= n else t[:n].rsplit(' ', 1)[0] + '\u2026'
+def article_head(s, name, news=True):
+    """<head> additions for a story or writing page: NewsArticle/Article JSON-LD + article meta tags."""
+    u = page_url(name)
+    pub = s['dt'].replace(microsecond=0)
+    mod = (parse_date(s.get('updated') or s.get('modified')) or pub).replace(microsecond=0)
+    if mod < pub:
+        mod = pub
+    imgs = []
+    for p in ([s.get('full'), s.get('img')] + [i for i, _ in story_photos(s)]):
+        a = abs_url(p)
+        if a and a not in imgs:
+            imgs.append(a)
+    if not imgs:
+        imgs = [LOGO_URL]
+    w = s.get('w')
+    if w:
+        author = {'@type': 'Person', 'name': w['name'], 'url': page_url(wurl(w))}
+    else:
+        author = {'@type': 'Organization', 'name': 'Mirror Lilong', 'url': SITE + '/'}
+    data = {'@context': 'https://schema.org', '@type': 'NewsArticle' if news else 'Article',
+            'mainEntityOfPage': {'@type': 'WebPage', '@id': u}, 'url': u,
+            'headline': ld_headline(s['title']),
+            'description': plain(s.get('summary') or s.get('body') or s['title']),
+            'image': imgs, 'datePublished': pub.isoformat(), 'dateModified': mod.isoformat(),
+            'author': [author], 'publisher': publisher_ld(), 'inLanguage': 'en',
+            'isAccessibleForFree': True}
+    sec = s.get('cat') or s.get('category')
+    if sec:
+        data['articleSection'] = sec
+    meta = ('<meta name="robots" content="max-image-preview:large">'
+            '<meta property="article:published_time" content="%s"><meta property="article:modified_time" content="%s">' % (pub.isoformat(), mod.isoformat()))
+    if sec:
+        meta += '<meta property="article:section" content="%s">' % esc(sec)
+    return meta + ld_script(data)
 
 def ga_snippet():
     if not re.match(r'^G-[A-Z0-9]+$', GA_ID or ''):
@@ -539,7 +615,8 @@ def build_article(stories, s, ctx):
           '<div class="art-body">%s</div>%s%s<p class="back"><a href="index.html">&lsaquo; Back to home</a></p></article>'
           '<aside class="col-side">%s%s</aside></div>%s') % (s['cat'].lower() + '.html', s['cat'], esc(s['title']), dek, by, badge(s), iso(s), fdate(s), share_bar(s, 'top'), fig,
           article_body(s), srcs + author_box(s.get('w')), share_bar(s, 'end'), trending(ctx, s), follow_box(), rel)
-    return page('%s | Mirror Lilong' % s['title'], s['summary'] or s['title'], s['cat'], main, ctx, s['img'])
+    return page('%s | Mirror Lilong' % s['title'], s['summary'] or s['title'], s['cat'], main, ctx, s['img'],
+                og_type='article', head=article_head(s, url(s), news=True))
 
 # ---------- About / Contact / Privacy / Terms ----------
 def info_page(title, desc, h1, body, ctx):
@@ -863,7 +940,8 @@ def build_writing(writings, s, ctx):
             {'pv': ' pv-body', 'story': ' story-body'}.get(s['ck'], ''), body, disc, author_box(w), share_bar(s, 'end'), cpage, WR_PLURAL.get(s['category'], h),
             write_for_us(), trending(ctx, s), follow_box(), rel)
     by = (' by ' + w['name']) if w else ''
-    return page('%s%s | Mirror Lilong' % (s['title'], by), s['summary'] or s['title'], 'Writers', main, ctx, s['img'] or None)
+    return page('%s%s | Mirror Lilong' % (s['title'], by), s['summary'] or s['title'], 'Writers', main, ctx, s['img'] or None,
+                og_type='article', head=article_head(s, s['_page'], news=False))
 
 def main():
     stories = load_stories()
@@ -900,6 +978,13 @@ def main():
         # clean URLs: home -> '/', other pages without '.html' (GitHub Pages serves both)
         text = re.sub(r'href="index\.html"', 'href="/"', text)
         text = re.sub(r'href="([a-z0-9][a-z0-9-]*)\.html"', r'href="/\1"', text)
+        # SEO: canonical URL (+ og:url) and, on pages without article data, Organization/WebSite JSON-LD
+        if name != '404.html' and '</head>' in text and 'rel="canonical"' not in text:
+            cu = page_url(name)
+            extra = '<link rel="canonical" href="%s"><meta property="og:url" content="%s">' % (cu, cu)
+            if 'application/ld+json' not in text:
+                extra += site_ld(home=(name == 'index.html'))
+            text = text.replace('</head>', extra + '</head>', 1)
         with open(os.path.join(OUT, name), 'w', encoding='utf-8') as f:
             f.write(text)
     w('index.html', build_index(stories, ctx))
@@ -935,14 +1020,30 @@ def main():
     import datetime as _dt
     _today = _dt.date.today().isoformat()
     _urls = []
+    _mod = {}  # story/writing page -> its own date (lastmod)
+    for _s in list(stories) + list(writings):
+        _d = (parse_date(_s.get('updated') or _s.get('modified')) or _s['dt']).replace(microsecond=0)
+        _mod[_s.get('_page') or url(_s)] = max(_d, _s['dt'].replace(microsecond=0)).isoformat()
     for _fn in sorted(os.listdir(OUT)):
         if _fn.endswith('.html') and _fn not in ('search.html', '404.html'):
             _u = SITE + '/' if _fn == 'index.html' else SITE + '/' + _fn[:-5]
-            _urls.append('<url><loc>%s</loc><lastmod>%s</lastmod></url>' % (_u, _today))
+            _urls.append('<url><loc>%s</loc><lastmod>%s</lastmod></url>' % (_u, _mod.get(_fn, _today)))
     with open(os.path.join(OUT, 'sitemap.xml'), 'w', encoding='utf-8') as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(_urls) + '\n</urlset>\n')
     with open(os.path.join(OUT, 'robots.txt'), 'w', encoding='utf-8') as f:
-        f.write('User-agent: *\nAllow: /\nDisallow: /admin/\n\nSitemap: %s/sitemap.xml\n' % SITE)
+        f.write('User-agent: *\nAllow: /\nDisallow: /admin/\n\nSitemap: %s/sitemap.xml\nSitemap: %s/news-sitemap.xml\n' % (SITE, SITE))
+    # Google News sitemap: news stories published in the last 2 days (Google's limit), newest first
+    _cut = datetime.datetime.now(IST) - datetime.timedelta(days=2)
+    _news = []
+    for _s in stories:
+        if _s['dt'] < _cut or _s['dt'] > datetime.datetime.now(IST) + datetime.timedelta(hours=1):
+            continue
+        _news.append('<url><loc>%s</loc><news:news><news:publication><news:name>Mirror Lilong</news:name><news:language>en</news:language></news:publication>'
+                     '<news:publication_date>%s</news:publication_date><news:title>%s</news:title></news:news></url>' % (
+                         page_url(url(_s)), _s['dt'].replace(microsecond=0).isoformat(), html.escape(_s['title'], quote=False)))
+    with open(os.path.join(OUT, 'news-sitemap.xml'), 'w', encoding='utf-8') as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n'
+                + '\n'.join(_news[:1000]) + ('\n' if _news else '') + '</urlset>\n')
     print('Built %d stories into _site/ (lead: %s)' % (len(stories), lead['slug']))
 
 if __name__ == '__main__':
