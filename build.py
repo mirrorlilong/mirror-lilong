@@ -20,7 +20,7 @@ IG = 'https://www.instagram.com/mirrorlilong/'
 YT = 'https://www.youtube.com/@teammirrormanipur'
 WA_CH = 'https://whatsapp.com/channel/0029VaVurd6GzzKbrvh1xP3r'  # WhatsApp Channel (floating pill + footer)
 CATS = ['Manipur', 'Northeast', 'India', 'World', 'Sports', 'Entertainment']
-NAV = [('Home', 'index.html')] + [(c, c.lower() + '.html') for c in CATS] + [('Videos', 'videos.html')]
+NAV = [('Home', 'index.html')] + [(c, c.lower() + '.html') for c in CATS] + [('Writers', 'writers.html'), ('Videos', 'videos.html')]
 SITE = 'https://mirrorlilong.com'  # used for share links
 # Google Analytics: paste a measurement id like "G-XXXXXXXXXX" here and every page gets the gtag snippet.
 GA_ID = "G-EVK542T9WM"
@@ -153,9 +153,10 @@ def inline(t):
     t = t.replace('\\\n', '<br>').replace('  \n', '<br>').replace('\n', ' ')
     return t
 
-def markdown(text, fig=None):
+def markdown(text, fig=None, keep_lines=False):
     """fig: optional callback for in-story photos; given a stripped block, returns figure HTML
-    ('' = render nothing) or None (not a photo block, render as usual)."""
+    ('' = render nothing) or None (not a photo block, render as usual).
+    keep_lines: keep single line breaks inside a paragraph (poems / Prose & Verse)."""
     text = str(text or '').replace('\r\n', '\n').replace('\u00a0', ' ').strip()
     out = []
     for block in re.split(r'\n\s*\n', text):
@@ -178,6 +179,9 @@ def markdown(text, fig=None):
             out.append('<ol>%s</ol>' % ''.join('<li>%s</li>' % inline(re.sub(r'^\s*\d+[.)]\s+', '', l)) for l in lines)); continue
         if all(l.lstrip().startswith('>') for l in lines):
             out.append('<blockquote><p>%s</p></blockquote>' % inline('\n'.join(re.sub(r'^\s*>\s?', '', l) for l in lines))); continue
+        if keep_lines:
+            out.append('<p>%s</p>' % '<br>'.join(inline(l.rstrip()) for l in lines))
+            continue
         out.append('<p>%s</p>' % inline(block))
     return ''.join(out)
 
@@ -216,7 +220,7 @@ def photo_figure(img, cap, alt, key):
     return '<figure class="art-fig art-photo%s" data-photo="%s"><img src="%s" loading="lazy" alt="%s"%s>%s</figure>' % (
         ' fbcard' if tall else '', esc(key), esc(img), esc(cap or alt), wh, capt)
 
-def article_body(s):
+def article_body(s, keep_lines=False):
     """Story text as HTML with in-story photos; plain markdown() when the story has none."""
     photos = story_photos(s)
     body = s.get('body')
@@ -238,7 +242,7 @@ def article_body(s):
                     used.add(i)
             return photo_figure(img, m.group(1).strip(), s['title'], 'img:' + img)
         return None
-    html_ = markdown(body, fig)
+    html_ = markdown(body, fig, keep_lines)
     rest = ''.join(photo_figure(p, c, s['title'], str(i)) for i, (p, c) in enumerate(photos, 1) if i not in used)
     return html_ + rest
 
@@ -282,7 +286,7 @@ def image_size(rel):
 # ---------- page parts (same markup and classes as the original design) ----------
 def fdate(s): return s['dt'].strftime('%d %b %Y')
 def iso(s): return s['dt'].strftime('%Y-%m-%d')
-def url(s): return 'news-%s.html' % s['slug']
+def url(s): return s.get('_page') or 'news-%s.html' % s['slug']
 def ext(u, label): return '<a href="%s" target="_blank" rel="noopener">%s</a>' % (esc(u), label)
 def badge(s): return '<span class="desk">Mirror Lilong</span>' if s.get('desk') else ''
 
@@ -296,6 +300,10 @@ def card(s, size='m', dek=False):
 def header(active, ctx):
     def li(n, h):
         cur = ' aria-current="page"' if n == active else ''
+        if n == 'Writers':
+            sub = ''.join('<li><a href="%s">%s</a></li>' % (p, esc(x)) for x, _, p in WR_CATS)
+            return ('<li class="has-sub"><a href="%s"%s>%s</a><button class="sub-btn" type="button" aria-expanded="false" aria-controls="wrSub" aria-label="Show Writers sections">%s</button>'
+                    '<ul class="sub" id="wrSub">%s</ul></li>') % (h, cur, n, CARET, sub)
         if n != 'Northeast':
             return '<li><a href="%s"%s>%s</a></li>' % (h, cur, n)
         sub = ''.join('<li><a href="%s">%s</a></li>' % (state_page(x), x) for x in NE_NAMES)
@@ -355,12 +363,12 @@ def share_bar(s, where):
     u = SITE + '/' + url(s)[:-5]
     wa = 'https://wa.me/?text=' + quote(s['title'] + ' ' + u, safe='')
     fb = 'https://www.facebook.com/sharer/sharer.php?u=' + quote(u, safe='')
-    return ('<div class="share share-%s" data-share data-url="%s" data-title="%s"><span class="share-lab">Share this story</span><div class="share-btns">'
+    return ('<div class="share share-%s" data-share data-url="%s" data-title="%s"><span class="share-lab">Share this %s</span><div class="share-btns">'
             '<a class="sh sh-wa" href="%s" target="_blank" rel="noopener" aria-label="Share on WhatsApp">%s<span>WhatsApp</span></a>'
             '<a class="sh sh-st" href="%s" target="_blank" rel="noopener" data-native aria-label="Share to WhatsApp Status">%s<span>Status</span></a>'
             '<a class="sh sh-fb" href="%s" target="_blank" rel="noopener" aria-label="Share on Facebook">%s<span>Facebook</span></a>'
             '<button class="sh sh-cp" type="button" data-copy aria-label="Copy link">%s<span>Copy link</span></button></div></div>') % (
-            where, esc(u), esc(s['title']), esc(wa), WA_SVG, esc(wa), WA_SVG, esc(fb), FB_SVG, LINK_SVG)
+            where, esc(u), esc(s['title']), 'post' if s.get('_page') else 'story', esc(wa), WA_SVG, esc(wa), WA_SVG, esc(fb), FB_SVG, LINK_SVG)
 
 def sec_title(t, href=None):
     more = ' <a class="more" href="%s">More &rsaquo;</a>' % href if href else ''
@@ -523,12 +531,14 @@ def build_article(stories, s, ctx):
     related = [x for x in bycat(stories, s['cat']) if x is not s][:3]
     rel = '<section class="block">%s<div class="grid g3">%s</div></section>' % (sec_title('More from ' + s['cat'], s['cat'].lower() + '.html'), ''.join(card(x) for x in related)) if related else ''
     by = 'Mirror Lilong Desk' if s.get('desk') else 'Mirror Lilong News Desk'
+    if s.get('w'):
+        by = '<a class="by-w" href="%s">%s<span>By %s</span></a>' % (wurl(s['w']), avatar(s['w'], 's'), esc(s['w']['name']))
     dek = '<p class="art-dek">%s</p>' % esc(s['summary']) if s['summary'] else ''
     main = ('<div class="two-col article-wrap"><article class="article"><nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> &rsaquo; <a href="%s">%s</a></nav>'
           '<h1>%s</h1>%s<div class="art-meta"><span class="by">%s</span>%s<time datetime="%s">%s</time></div>%s%s'
           '<div class="art-body">%s</div>%s%s<p class="back"><a href="index.html">&lsaquo; Back to home</a></p></article>'
           '<aside class="col-side">%s%s</aside></div>%s') % (s['cat'].lower() + '.html', s['cat'], esc(s['title']), dek, by, badge(s), iso(s), fdate(s), share_bar(s, 'top'), fig,
-          article_body(s), srcs, share_bar(s, 'end'), trending(ctx, s), follow_box(), rel)
+          article_body(s), srcs + author_box(s.get('w')), share_bar(s, 'end'), trending(ctx, s), follow_box(), rel)
     return page('%s | Mirror Lilong' % s['title'], s['summary'] or s['title'], s['cat'], main, ctx, s['img'])
 
 # ---------- About / Contact / Privacy / Terms ----------
@@ -603,11 +613,258 @@ def search_index(stories):
                         'd': iso(s), 'df': fdate(s), 'u': '/' + url(s)[:-5], 'i': s['img'] if s['img'].startswith('http') else '/' + s['img']} for s in stories],
                       ensure_ascii=False, separators=(',', ':'))
 
+
+# ---------- Writers: Opinion, Prose & Verse ----------
+# content/writers/<slug>.json  : one file per writer (Pages CMS "Writers")
+# content/writings/<slug>.json : one file per piece (Pages CMS "Opinion, Prose & Verse"),
+#                                category "Opinion" or "Prose & Verse"
+# A news story may also name a writer ("writer" field) to get a byline and an author box.
+# These pages are English only: translate_inject.py only touches news-*.html.
+WRITER_ROLES = ['Journalist', 'Correspondent', 'Columnist', 'Guest Writer', 'Blogger', 'Poet', 'Author', 'Editor']
+WR_CATS = [('Opinion', 'opinion', 'opinion.html'), ('Prose & Verse', 'pv', 'prose-verse.html')]
+WR_CAT_INFO = {
+    'Opinion': ('Opinion', 'Views, columns and analysis from the writers of Mirror Lilong.'),
+    'Prose & Verse': ('Prose &amp; Verse', 'Stories, essays and poems from the writers of Mirror Lilong.'),
+}
+X_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'
+IG_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="17.4" cy="6.6" r="1.3" fill="currentColor"/></svg>'
+MAIL_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="m3.5 6.5 8.5 7 8.5-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>'
+QUOTE_SVG = '<svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true" focusable="false"><path fill="currentColor" d="M13 7C7.5 8.6 4 13 4 18.6 4 22.6 6.4 25 9.6 25c2.9 0 5-2.1 5-4.9 0-2.7-1.9-4.6-4.5-4.6-.5 0-1 .1-1.3.2.6-2.9 3-5.4 6.2-6.6zm14 0c-5.5 1.6-9 6-9 11.6 0 4 2.4 6.4 5.6 6.4 2.9 0 5-2.1 5-4.9 0-2.7-1.9-4.6-4.5-4.6-.5 0-1 .1-1.3.2.6-2.9 3-5.4 6.2-6.6z"/></svg>'
+
+
+def _slug(t): return re.sub(r'[^a-z0-9]+', '-', str(t or '').lower()).strip('-')
+
+def wr_cat(v):
+    """'Opinion' or 'Prose & Verse' (also accepts 'prose', 'verse', 'poem', 'poetry')."""
+    v = str(v or '').strip().lower()
+    if v and (v.startswith('prose') or v in ('verse', 'poem', 'poetry', 'poems', 'story', 'essay')):
+        return 'Prose & Verse'
+    return 'Opinion'
+
+def wr_cat_key(c): return 'pv' if c == 'Prose & Verse' else 'opinion'
+def wr_cat_page(c): return 'prose-verse.html' if c == 'Prose & Verse' else 'opinion.html'
+
+def load_writers():
+    folder = os.path.join(CONTENT, 'writers')
+    out = {}
+    if not os.path.isdir(folder):
+        return out
+    for fn in sorted(os.listdir(folder)):
+        if not fn.endswith('.json'):
+            continue
+        try:
+            w = json.load(open(os.path.join(folder, fn), encoding='utf-8'))
+        except Exception as e:
+            warn('skipped writer %s: not valid JSON (%s)' % (fn, e)); continue
+        if not isinstance(w, dict) or not str(w.get('name') or '').strip() or w.get('hidden'):
+            continue
+        w['name'] = str(w['name']).strip()
+        w['slug'] = _slug(fn[:-5]) or _slug(w['name'])
+        if not w['slug']:
+            continue
+        w['role'] = w.get('role') if w.get('role') in WRITER_ROLES else 'Writer'
+        w['bio'] = str(w.get('bio') or '').strip()
+        w['photo_src'] = asset(w.get('photo')) if str(w.get('photo') or '').strip() else ''
+        w['posts'] = []
+        out[w['slug']] = w
+    return out
+
+def find_writer(writers, ref):
+    """A writer reference from the CMS: 'content/writers/x.json', 'x.json', 'x' or the writer's name."""
+    r = str(ref or '').strip()
+    if not r:
+        return None
+    key = _slug(os.path.basename(r)[:-5] if r.endswith('.json') else r)
+    if key in writers:
+        return writers[key]
+    for w in writers.values():
+        if _slug(w['name']) == key:
+            return w
+    return None
+
+def load_writings(writers):
+    folder = os.path.join(CONTENT, 'writings')
+    out = []
+    if not os.path.isdir(folder):
+        return out
+    for fn in sorted(os.listdir(folder)):
+        if not fn.endswith('.json'):
+            continue
+        try:
+            s = json.load(open(os.path.join(folder, fn), encoding='utf-8'))
+        except Exception as e:
+            warn('skipped writing %s: not valid JSON (%s)' % (fn, e)); continue
+        if not isinstance(s, dict) or not str(s.get('title') or '').strip() or s.get('hidden'):
+            continue
+        s['slug'] = _slug(fn[:-5]) or _slug(s['title'])
+        if not s['slug']:
+            continue
+        s['category'] = wr_cat(s.get('category'))
+        s['type'] = s['category']
+        s['ck'] = wr_cat_key(s['category'])
+        s['_page'] = '%s-%s.html' % ('prose-verse' if s['ck'] == 'pv' else 'opinion', s['slug'])
+        s['title'] = str(s['title']).strip()
+        s['dt'] = parse_date(s.get('date')) or datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folder, fn)), IST)
+        s['cat'] = s['category']
+        s['summary'] = str(s.get('summary') or '').strip()
+        s['img'] = asset(s.get('image')) if str(s.get('image') or '').strip() else ''
+        s['full'] = s['img']
+        s['w'] = find_writer(writers, s.get('writer'))
+        if s.get('writer') and not s['w']:
+            warn('%s: writer %r not found in content/writers' % (fn, s.get('writer')))
+        out.append(s)
+    out.sort(key=lambda s: (s['dt'], s['slug']), reverse=True)
+    for s in out:
+        if s['w']:
+            s['w']['posts'].append(s)
+    return out
+
+def initials(name):
+    parts = [p for p in re.split(r'[\s.]+', name) if p and p[0].isalnum()]
+    return ((parts[0][0] + (parts[-1][0] if len(parts) > 1 else '')) if parts else '?').upper()
+
+def avatar(w, size='m'):
+    if not w:
+        return '<span class="av av-%s av-desk" aria-hidden="true"><img src="favicon-192.png" alt=""></span>' % size
+    if w['photo_src']:
+        return '<span class="av av-%s"><img src="%s" alt="%s" loading="lazy"></span>' % (size, esc(w['photo_src']), esc(w['name']))
+    hue = sum(map(ord, w['slug'])) % 4
+    return '<span class="av av-%s av-ini av-c%d" aria-hidden="true">%s</span>' % (size, hue, esc(initials(w['name'])))
+
+def wurl(w): return 'writer-%s.html' % w['slug']
+
+def socials(w):
+    out = []
+    if w.get('facebook'): out.append('<a class="so so-fb" href="%s" target="_blank" rel="noopener" aria-label="Facebook">%s</a>' % (esc(w['facebook']), FB_SVG))
+    if w.get('instagram'): out.append('<a class="so so-ig" href="%s" target="_blank" rel="noopener" aria-label="Instagram">%s</a>' % (esc(w['instagram']), IG_SVG))
+    if w.get('x'): out.append('<a class="so so-x" href="%s" target="_blank" rel="noopener" aria-label="X (Twitter)">%s</a>' % (esc(w['x']), X_SVG))
+    if w.get('email'): out.append('<a class="so so-em" href="mailto:%s" aria-label="Email">%s</a>' % (esc(w['email']), MAIL_SVG))
+    return '<div class="socials">%s</div>' % ''.join(out) if out else ''
+
+def wcount(w):
+    n = len(w['posts']) + len(w.get('news', []))
+    return '%d piece%s' % (n, '' if n == 1 else 's')
+
+def writer_card(w):
+    bio = w['bio'] if len(w['bio']) <= 140 else w['bio'][:137].rsplit(' ', 1)[0] + '…'
+    return ('<article class="wcard"><a href="%s" class="wcard-link">%s<div class="wcard-body"><span class="wrole">%s</span><h3>%s</h3><p>%s</p>'
+            '<span class="wcount">%s &rsaquo;</span></div></a></article>') % (wurl(w), avatar(w, 'l'), esc(w['role']), esc(w['name']), esc(bio), wcount(w))
+
+def op_item(s, show_author=True):
+    w = s['w']
+    who = ('<span class="op-by">%s<span><b>%s</b>%s</span></span>' % (avatar(w, 's'), esc(w['name']) if w else 'Mirror Lilong', (' &middot; ' + esc(w['role'])) if w else '')) if show_author else ''
+    dek = '<p class="dek">%s</p>' % esc(s['summary']) if s['summary'] else ''
+    return ('<article class="op-item"><a href="%s"><span class="op-type op-%s">%s</span><h3>%s</h3>%s<div class="op-foot">%s<time datetime="%s">%s</time></div></a></article>') % (
+            s['_page'], s['ck'], esc(s['category']), esc(s['title']), dek, who, iso(s), fdate(s))
+
+def wr_chips(current=None):
+    """Writers / Opinion / Prose & Verse tabs at the top of the section pages."""
+    tabs = [('All', 'writers.html', None)] + [(n, p, n) for n, _, p in WR_CATS]
+    return '<nav class="chips wr-chips" aria-label="Writers sections">%s</nav>' % ''.join(
+        '<a href="%s"%s>%s</a>' % (p, ' aria-current="page"' if c == current else '', esc(n)) for n, p, c in tabs)
+
+def write_for_us():
+    return ('<section class="wfu"><h2>Write for Mirror Lilong</h2><p>Writers, poets and columnists from Lilong, Manipur and the Northeast are welcome. '
+            'Send us your opinion piece, story or poem.</p><a class="wfu-btn" href="contact.html">Send your writing &rsaquo;</a></section>')
+
+def wr_empty(text):
+    return '<div class="empty-state wr-empty"><p class="es-big">%s</p><p>New pieces from our writers will appear here.</p></div>' % text
+
+def build_writers(writers, writings, ctx):
+    ws = sorted(writers.values(), key=lambda w: (-(len(w['posts']) + len(w.get('news', []))), w['name']))
+    grid = '<section class="block">%s<div class="wgrid">%s</div></section>' % (sec_title('Our Writers'), ''.join(writer_card(w) for w in ws)) if ws else ''
+    lst = '<div class="op-list">%s</div>' % ''.join(op_item(s) for s in writings[:20]) if writings else wr_empty('Coming soon.')
+    main = ('<nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> &rsaquo; Writers</nav>'
+            '<div class="cat-head wr-head"><h1>Writers</h1><p>Opinion, prose and verse from the writers of Mirror Lilong</p></div>%s%s'
+            '<div class="two-col"><div class="col-main"><section class="block">%s%s</section></div>'
+            '<aside class="col-side">%s%s</aside></div>') % (wr_chips(), grid, sec_title('Latest from our writers'), lst, write_for_us(), follow_box())
+    return page('Writers | Mirror Lilong', 'Opinion, prose and verse from the writers of Mirror Lilong.', 'Writers', main, ctx)
+
+def build_wr_cat(writings, cat, ctx):
+    h, desc = WR_CAT_INFO[cat]
+    items = [s for s in writings if s['category'] == cat]
+    lst = '<div class="op-list">%s</div>' % ''.join(op_item(s) for s in items) if items else wr_empty('No %s pieces yet.' % h)
+    main = ('<nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> &rsaquo; <a href="writers.html">Writers</a> &rsaquo; %s</nav>'
+            '<div class="cat-head wr-head"><h1>%s</h1><p>%s</p></div>%s'
+            '<div class="two-col"><div class="col-main"><section class="block">%s</section></div>'
+            '<aside class="col-side">%s%s</aside></div>') % (h, h, esc(desc), wr_chips(cat), lst, write_for_us(), follow_box())
+    return page('%s | Writers | Mirror Lilong' % cat, desc, 'Writers', main, ctx)
+
+def build_writer(w, writings, ctx):
+    items = ''.join(op_item(s, False) for s in w['posts'])
+    news = w.get('news', [])
+    if news:
+        items += '<div class="grid g2 w-news">%s</div>' % ''.join(card(s) for s in news[:12])
+    if not items:
+        items = '<p class="note">No pieces yet.</p>'
+    bio = markdown(w['bio']) if w['bio'] else ''
+    loc = '<span class="wloc">%s</span>' % esc(w['location']) if w.get('location') else ''
+    others = [x for x in writings if x['w'] is not w][:4]
+    more = '<section class="block">%s<div class="op-list">%s</div></section>' % (sec_title('More from our writers', 'writers.html'), ''.join(op_item(s) for s in others)) if others else ''
+    main = ('<nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> &rsaquo; <a href="writers.html">Writers</a> &rsaquo; %s</nav>'
+            '<section class="wprof"><div class="wprof-band"></div><div class="wprof-in">%s<div class="wprof-txt"><span class="wrole">%s</span><h1>%s</h1>%s'
+            '<div class="wstats"><b>%s</b></div></div></div><div class="wprof-bio">%s%s</div></section>'
+            '<div class="two-col"><div class="col-main"><section class="block">%s<div class="op-list">%s</div></section>%s</div>'
+            '<aside class="col-side">%s%s</aside></div>') % (
+            esc(w['name']), avatar(w, 'xl'), esc(w['role']), esc(w['name']), loc, wcount(w), bio, socials(w),
+            sec_title('By ' + esc(w['name'])), items, more, write_for_us(), follow_box())
+    return page('%s, %s | Mirror Lilong' % (w['name'], w['role']), w['bio'][:160] or ('%s at Mirror Lilong' % w['role']), 'Writers', main, ctx, w['photo_src'] or None)
+
+def author_box(w, top=False):
+    if not w:
+        return ''
+    if top:
+        return ('<div class="op-author"><a href="%s">%s</a><div><a class="oa-name" href="%s">%s</a><span class="oa-role">%s</span></div></div>') % (
+                wurl(w), avatar(w, 'm'), wurl(w), esc(w['name']), esc(w['role']))
+    return ('<aside class="abox"><span class="abox-lab">About the writer</span><div class="abox-in"><a href="%s">%s</a><div><a class="oa-name" href="%s">%s</a>'
+            '<span class="oa-role">%s</span><p>%s</p>%s<a class="abox-more" href="%s">All pieces by %s &rsaquo;</a></div></div></aside>') % (
+            wurl(w), avatar(w, 'l'), wurl(w), esc(w['name']), esc(w['role']), esc(w['bio']), socials(w), wurl(w), esc(w['name']))
+
+def build_writing(writings, s, ctx):
+    w = s['w']
+    pv = s['ck'] == 'pv'
+    body = article_body(s, keep_lines=pv)
+    pq = str(s.get('pull_quote') or '').strip()
+    if pq and not pv:
+        quote_html = '<blockquote class="pullq">%s<p>%s</p></blockquote>' % (QUOTE_SVG, esc(pq))
+        k = [m.end() for m in re.finditer(r'</p>', body)]
+        body = body[:k[1]] + quote_html + body[k[1]:] if len(k) > 3 else body + quote_html
+    fig = ''
+    if s['img']:
+        cap = s.get('image_credit') or ''
+        fig = '<figure class="art-fig"><img src="%s" alt="%s">%s</figure>' % (esc(s['img']), esc(s['title']), '<figcaption>%s</figcaption>' % inline(cap) if cap else '')
+    dek = '<p class="art-dek">%s</p>' % esc(s['summary']) if s['summary'] else ''
+    if pv:
+        disc = '<p class="op-disc pv-note">&copy; %s. Published on Mirror Lilong with the author&#8217;s permission.</p>' % (esc(w['name']) if w else 'The author')
+    else:
+        disc = '<p class="op-disc"><b>Disclaimer:</b> The views expressed in this article are the author&#8217;s own and do not necessarily reflect those of Mirror Lilong.</p>'
+    h, _ = WR_CAT_INFO[s['category']]
+    cpage = wr_cat_page(s['category'])
+    same = [x for x in writings if x is not s and x['category'] == s['category']]
+    more = (same + [x for x in writings if x is not s and x['category'] != s['category']])[:4]
+    rel = '<section class="block">%s<div class="op-list op-list-2">%s</div></section>' % (sec_title('More from our writers', 'writers.html'), ''.join(op_item(x) for x in more)) if more else ''
+    main = ('<div class="two-col article-wrap"><article class="article op-article%s"><nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> &rsaquo; <a href="writers.html">Writers</a> &rsaquo; <a href="%s">%s</a></nav>'
+            '<span class="op-label op-%s">%s</span><h1>%s</h1>%s<div class="art-meta op-meta">%s<time datetime="%s">%s</time></div>%s%s'
+            '<div class="art-body%s">%s</div>%s%s%s<p class="back"><a href="%s">&lsaquo; All %s</a></p></article>'
+            '<aside class="col-side">%s%s%s</aside></div>%s') % (
+            ' pv-article' if pv else '', cpage, h,
+            s['ck'], h, esc(s['title']), dek, author_box(w, True), iso(s), fdate(s), share_bar(s, 'top'), fig,
+            ' pv-body' if pv else '', body, disc, author_box(w), share_bar(s, 'end'), cpage, h,
+            write_for_us(), trending(ctx, s), follow_box(), rel)
+    by = (' by ' + w['name']) if w else ''
+    return page('%s%s | Mirror Lilong' % (s['title'], by), s['summary'] or s['title'], 'Writers', main, ctx, s['img'] or None)
+
 def main():
     stories = load_stories()
     if not stories:
         sys.exit('No stories found in content/stories/')
     videos = load_videos()
+    writers = load_writers()
+    writings = load_writings(writers)
+    for s in stories:  # optional byline on news stories
+        s['w'] = find_writer(writers, s.get('writer'))
+        if s['w']:
+            s['w'].setdefault('news', []).append(s)
     now = datetime.datetime.now(IST)
     slides = flagged(stories, 'lead', 5)  # homepage slider: 5 newest lead stories, topped up with newest others
     lead = slides[0]
@@ -650,6 +907,14 @@ def main():
             json.dump(ctx['news'], f, ensure_ascii=False, indent=1)
     with open(os.path.join(OUT, 'ads.txt'), 'w', encoding='utf-8') as f:
         f.write('google.com, pub-4739495411759158, DIRECT, f08c47fec0942fa0\n')
+    # Writers section (English only): /writers, /opinion, /prose-verse, /writer-<slug>, /opinion-<slug>, /prose-verse-<slug>
+    w('writers.html', build_writers(writers, writings, ctx))
+    for cname, _, cpage in WR_CATS:
+        w(cpage, build_wr_cat(writings, cname, ctx))
+    for wr in writers.values():
+        w(wurl(wr), build_writer(wr, writings, ctx))
+    for s in writings:
+        w(s['_page'], build_writing(writings, s, ctx))
     for s in stories:
         w(url(s), build_article(stories, s, ctx))
         for p in (s['img'], s['full']):

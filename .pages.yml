@@ -83,6 +83,15 @@ content:
             label: Caption or story text under this photo (optional)
             description: A short line shows as a small grey caption. Longer text shows as normal story paragraphs below the photo.
             type: text
+      - name: writer
+        label: Reporter / writer byline (optional)
+        description: Pick a writer to show their name and photo on this news story.
+        type: reference
+        options:
+          collection: writers
+          search: name
+          value: "{path}"
+          label: "{name}"
       - name: facebook
         label: Facebook post link (optional)
         description: Adds a "Read on Facebook" link.
@@ -128,6 +137,135 @@ content:
         type: image
       - name: hidden
         label: Hide this story from the website
+        type: boolean
+        default: false
+
+  # ---------- Writers: Opinion, Prose & Verse (English only, not translated) ----------
+  - name: writers
+    label: Writers
+    type: collection
+    path: content/writers
+    format: json
+    filename: "{primary}.json"
+    view:
+      fields: [name, role]
+      primary: name
+      sort: [name]
+      search: [name, bio]
+    fields:
+      - name: name
+        label: Full name
+        type: string
+        required: true
+      - name: role
+        label: Role
+        type: select
+        required: true
+        default: Journalist
+        options:
+          values: [Journalist, Correspondent, Columnist, Guest Writer, Blogger, Poet, Author, Editor]
+      - name: photo
+        label: Photo (square works best)
+        description: Optional. Without a photo, the writer's initials are shown in a red circle.
+        type: image
+      - name: location
+        label: Place (optional, e.g. Lilong, Manipur)
+        type: string
+      - name: bio
+        label: Short bio (2-3 lines)
+        type: text
+      - name: facebook
+        label: Facebook link (optional)
+        type: string
+      - name: instagram
+        label: Instagram link (optional)
+        type: string
+      - name: x
+        label: X / Twitter link (optional)
+        type: string
+      - name: email
+        label: Email (optional, shown publicly)
+        type: string
+      - name: hidden
+        label: Hide this writer from the website
+        type: boolean
+        default: false
+
+  - name: writings
+    label: Opinion, Prose & Verse
+    type: collection
+    path: content/writings
+    format: json
+    filename: "{primary}.json"
+    view:
+      fields: [title, category, date]
+      primary: title
+      sort: [date, title]
+      search: [title, summary]
+      default:
+        sort: date
+        order: desc
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: category
+        label: Category
+        description: Opinion, or Prose & Verse (stories, essays, poems).
+        type: select
+        required: true
+        default: Opinion
+        options:
+          values: [Opinion, Prose & Verse]
+      - name: writer
+        label: Writer
+        description: Pick from Writers. Add the writer there first.
+        type: reference
+        required: true
+        options:
+          collection: writers
+          search: name
+          value: "{path}"
+          label: "{name}"
+      - name: date
+        label: Date and time
+        type: date
+        required: true
+        options:
+          time: true
+          format: "yyyy-MM-dd'T'HH:mm"
+      - name: summary
+        label: Short summary (optional, 1-2 lines under the title)
+        type: text
+      - name: image
+        label: Photo (optional)
+        type: image
+      - name: image_credit
+        label: Photo credit (optional)
+        type: string
+      - name: body
+        label: Text
+        description: "Opinion: leave an empty line between paragraphs. Prose & Verse: every line break is kept exactly; leave an empty line between stanzas."
+        type: text
+        required: true
+      - name: pull_quote
+        label: Highlighted quote (optional, Opinion only)
+        description: One striking line, shown big in the middle of the page.
+        type: string
+      - name: photos
+        label: More photos (optional)
+        type: object
+        list: true
+        fields:
+          - name: image
+            label: Photo
+            type: image
+          - name: caption
+            label: Caption (optional)
+            type: text
+      - name: hidden
+        label: Hide from the website
         type: boolean
         default: false
 
