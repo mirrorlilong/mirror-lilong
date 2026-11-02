@@ -462,10 +462,18 @@ def ago(iso_s, now):
 def trending(ctx, exclude=None, n=6):
     news = ctx.get('news')
     if news and news.get('items'):
-        # live news from publishers' feeds (trending.py), Manipur first, then Northeast, India, World
+        # Mirror Lilong's own stories switched to Trending in the admin come first (newest first),
+        # then live news from publishers' feeds (trending.py), Manipur first, then Northeast, India, World
         now = ctx['now']
         rows = ''
-        for x in news['items']:
+        own = [s for s in ctx.get('trend_own', []) if s is not exclude][:4]
+        for s in own:
+            when, full = ago(s['dt'].isoformat(), now)
+            rows += ('<li class="tn-item tn-own tn-%s"><a href="%s"><span class="tn-img"><img src="%s" alt="" loading="lazy" decoding="async" width="120" height="80"></span>'
+                     '<span class="tn-body"><span class="tn-cat">%s</span><span class="tn-tt">%s</span><span class="tn-meta">Mirror Lilong &middot; <time datetime="%s" title="%s" data-ago>%s</time></span></span></a></li>') % (
+                     esc(s['cat'].lower()), url(s), esc(s['img']), esc(s['cat']), esc(s['title']), esc(s['dt'].isoformat()), esc(full), when)
+        feed = news['items'][:max(len(news['items']) - len(own), 3)]
+        for x in feed:
             when, full = ago(x.get('published', ''), now)
             c = x.get('category', '')
             rows += ('<li class="tn-item tn-%s"><a href="%s" target="_blank" rel="noopener"><span class="tn-img"><img src="%s" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" width="120" height="80" onerror="this.closest(\'li\').hidden=true"></span>'
@@ -958,9 +966,10 @@ def main():
     slides = flagged(stories, 'lead', 5)  # homepage slider: 5 newest lead stories, topped up with newest others
     lead = slides[0]
     ctx = dict(today=now.strftime('%A, ') + str(now.day) + now.strftime(' %B %Y'), year=now.year, lead=lead, slides=slides)
-    ctx['top'] = flagged(stories, 'top', 5, exclude=tuple(slides))
+    ctx['top'] = flagged(stories, 'top', 5)  # 5 newest Top-Story-flagged stories, even if also in the slider
     ctx['tick'] = flagged(stories, 'breaking', 7)
     ctx['trend'] = flagged(stories, 'trending', 8)
+    ctx['trend_own'] = [s for s in stories if s.get('trending')]  # only stories actually switched to Trending, newest first
     ctx['now'] = datetime.datetime.now(datetime.timezone.utc)
     # Trending: the latest real news (Manipur > Northeast > India > World) read from publishers' feeds at
     # build time; the workflow rebuilds every 3 hours. Any failure keeps the last good list or the old box.
