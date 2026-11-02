@@ -693,6 +693,22 @@ def build_search(ctx):
             '<div class="two-col"><div class="col-main"><div id="srResults" class="sr-results" aria-live="polite"><noscript><p class="note">Search needs JavaScript turned on.</p></noscript></div></div><aside class="col-side">%s%s</aside></div>') % (trending(ctx), follow_box())
     return page('Search | Mirror Lilong', 'Search all Mirror Lilong news stories.', None, main, ctx)
 
+def build_404(stories, ctx):
+    """Branded 'page not found' page. GitHub Pages serves /404.html for any missing URL, at any depth,
+    so main() turns every relative link/asset in it into a root path (see root_paths)."""
+    latest = ''.join(card(s, 'm', True) for s in stories[:6])
+    main = ('<section class="e404"><p class="e404-code" aria-hidden="true">404</p><h1>Page not found</h1>'
+            '<p class="e404-msg">The story you&rsquo;re looking for may have moved or been removed.</p>'
+            '<form class="sr-form e404-form" action="/search" method="get" role="search"><input class="sr-input" type="search" name="q" placeholder="Search Mirror Lilong news" autocomplete="off" enterkeyhint="search" aria-label="Search news"><button type="submit">Search</button></form>'
+            '<a class="e404-home" href="index.html">Go to homepage</a></section>'
+            '%s<div class="grid g3">%s</div>') % (sec_title('Latest stories', 'index.html'), latest)
+    return page('Page not found | Mirror Lilong', 'This page could not be found on Mirror Lilong.', None, main, ctx,
+                head='<meta name="robots" content="noindex">')
+
+def root_paths(text):
+    """Relative href/src/srcset -> root paths ('styles.css' -> '/styles.css'), for pages served at any depth."""
+    return re.sub(r'(\s(?:href|src|srcset)=")(?!(?:https?:|//|/|#|mailto:|tel:|data:|javascript:))([^"]+)"', r'\1/\2"', text)
+
 def search_index(stories):
     return json.dumps([{'t': s['title'], 's': s['summary'], 'c': s['cat'], 'a': s.get('also_in') or '', 'st': s.get('states', []),
                         'd': iso(s), 'df': fdate(s), 'u': '/' + url(s)[:-5], 'i': s['img'] if s['img'].startswith('http') else '/' + s['img']} for s in stories],
@@ -994,6 +1010,8 @@ def main():
             if 'application/ld+json' not in text:
                 extra += site_ld(home=(name == 'index.html'))
             text = text.replace('</head>', extra + '</head>', 1)
+        if name == '404.html':
+            text = root_paths(text)  # served for missing URLs at any depth
         with open(os.path.join(OUT, name), 'w', encoding='utf-8') as f:
             f.write(text)
     w('index.html', build_index(stories, ctx))
@@ -1003,6 +1021,7 @@ def main():
     for st in NE_NAMES:
         w(state_page(st), build_state(stories, st, ctx))
     w('search.html', build_search(ctx))
+    w('404.html', build_404(stories, ctx))  # custom 'page not found' (no GitHub page)
     with open(os.path.join(OUT, 'search.json'), 'w', encoding='utf-8') as f:
         f.write(search_index(stories))
     for name, text in build_info(ctx):

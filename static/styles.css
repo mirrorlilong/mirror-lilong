@@ -485,3 +485,13 @@ time{color:var(--mute);font-size:12.5px}
 .story-body{text-align:left}
 .op-article .story-body p{font-family:Georgia,"Times New Roman",serif;font-size:18.5px;line-height:1.75;text-align:left;hyphens:manual;-webkit-hyphens:manual;margin:0 0 1.15em;overflow-wrap:break-word}
 .story-article .art-dek{border-left:3px solid var(--red);padding-left:12px}
+
+/* 404: custom "page not found" page (build_404) */
+.e404{text-align:center;padding:34px 0 10px;max-width:680px;margin:0 auto}
+.e404-code{margin:0;font-family:Georgia,"Times New Roman",serif;font-weight:900;font-size:clamp(88px,22vw,150px);line-height:1;color:var(--red);letter-spacing:-.02em}
+.e404 h1{margin:6px 0 8px;font-size:clamp(24px,5.5vw,34px);text-transform:uppercase;letter-spacing:.02em;color:var(--ink)}
+.e404-msg{margin:0 auto 6px;color:var(--ink2);font-size:16.5px;max-width:520px}
+.e404-form{margin:18px auto 16px}
+.e404-home{display:inline-block;background:var(--ink);color:#fff;font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:.04em;padding:13px 22px;border-radius:4px;border-bottom:3px solid var(--red)}
+.e404-home:hover{background:var(--red);color:#fff}
+.e404+.sec-title{margin-top:34px}
