@@ -616,16 +616,21 @@ def search_index(stories):
 
 # ---------- Writers: Opinion, Prose & Verse ----------
 # content/writers/<slug>.json  : one file per writer (Pages CMS "Writers")
-# content/writings/<slug>.json : one file per piece (Pages CMS "Opinion, Prose & Verse"),
-#                                category "Opinion" or "Prose & Verse"
+# content/writings/<slug>.json : one file per piece (Pages CMS "Writings (Opinion, Prose & Verse, Story, Article)"),
+#                                category "Opinion", "Prose & Verse", "Story" or "Article"
 # A news story may also name a writer ("writer" field) to get a byline and an author box.
 # These pages are English only: translate_inject.py only touches news-*.html.
 WRITER_ROLES = ['Journalist', 'Correspondent', 'Columnist', 'Guest Writer', 'Blogger', 'Poet', 'Author', 'Editor']
-WR_CATS = [('Opinion', 'opinion', 'opinion.html'), ('Prose & Verse', 'pv', 'prose-verse.html')]
+# (category name, css key, listing page); a piece's page is <listing page name>-<slug>.html
+WR_CATS = [('Opinion', 'opinion', 'opinion.html'), ('Prose & Verse', 'pv', 'prose-verse.html'),
+           ('Story', 'story', 'story.html'), ('Article', 'article', 'article.html')]
 WR_CAT_INFO = {
     'Opinion': ('Opinion', 'Views, columns and analysis from the writers of Mirror Lilong.'),
-    'Prose & Verse': ('Prose &amp; Verse', 'Stories, essays and poems from the writers of Mirror Lilong.'),
+    'Prose & Verse': ('Prose &amp; Verse', 'Prose and poems from the writers of Mirror Lilong.'),
+    'Story': ('Story', 'Short stories and fiction from the writers of Mirror Lilong.'),
+    'Article': ('Article', 'Articles, features and essays from the writers of Mirror Lilong.'),
 }
+WR_PLURAL = {'Story': 'Stories', 'Article': 'Articles'}  # 'All Stories', 'No stories yet.'
 X_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'
 IG_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="17.4" cy="6.6" r="1.3" fill="currentColor"/></svg>'
 MAIL_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="19" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="m3.5 6.5 8.5 7 8.5-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>'
@@ -635,14 +640,18 @@ QUOTE_SVG = '<svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true" 
 def _slug(t): return re.sub(r'[^a-z0-9]+', '-', str(t or '').lower()).strip('-')
 
 def wr_cat(v):
-    """'Opinion' or 'Prose & Verse' (also accepts 'prose', 'verse', 'poem', 'poetry')."""
+    """'Opinion', 'Prose & Verse', 'Story' or 'Article' (also accepts 'prose', 'verse', 'poem', 'stories', 'articles' ...)."""
     v = str(v or '').strip().lower()
-    if v and (v.startswith('prose') or v in ('verse', 'poem', 'poetry', 'poems', 'story', 'essay')):
+    if v in ('story', 'stories', 'short story', 'fiction'):
+        return 'Story'
+    if v in ('article', 'articles', 'feature', 'essay'):
+        return 'Article'
+    if v and (v.startswith('prose') or v in ('verse', 'poem', 'poetry', 'poems')):
         return 'Prose & Verse'
     return 'Opinion'
 
-def wr_cat_key(c): return 'pv' if c == 'Prose & Verse' else 'opinion'
-def wr_cat_page(c): return 'prose-verse.html' if c == 'Prose & Verse' else 'opinion.html'
+def wr_cat_key(c): return {n: k for n, k, _ in WR_CATS}.get(c, 'opinion')
+def wr_cat_page(c): return {n: p for n, _, p in WR_CATS}.get(c, 'opinion.html')
 
 def load_writers():
     folder = os.path.join(CONTENT, 'writers')
@@ -702,7 +711,7 @@ def load_writings(writers):
         s['category'] = wr_cat(s.get('category'))
         s['type'] = s['category']
         s['ck'] = wr_cat_key(s['category'])
-        s['_page'] = '%s-%s.html' % ('prose-verse' if s['ck'] == 'pv' else 'opinion', s['slug'])
+        s['_page'] = '%s-%s.html' % (wr_cat_page(s['category'])[:-5], s['slug'])
         s['title'] = str(s['title']).strip()
         s['dt'] = parse_date(s.get('date')) or datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folder, fn)), IST)
         s['cat'] = s['category']
@@ -765,7 +774,7 @@ def wr_chips(current=None):
 
 def write_for_us():
     return ('<section class="wfu"><h2>Write for Mirror Lilong</h2><p>Writers, poets and columnists from Lilong, Manipur and the Northeast are welcome. '
-            'Send us your opinion piece, story or poem.</p><a class="wfu-btn" href="contact.html">Send your writing &rsaquo;</a></section>')
+            'Send us your opinion piece, article, story or poem.</p><a class="wfu-btn" href="contact.html">Send your writing &rsaquo;</a></section>')
 
 def wr_empty(text):
     return '<div class="empty-state wr-empty"><p class="es-big">%s</p><p>New pieces from our writers will appear here.</p></div>' % text
@@ -775,15 +784,15 @@ def build_writers(writers, writings, ctx):
     grid = '<section class="block">%s<div class="wgrid">%s</div></section>' % (sec_title('Our Writers'), ''.join(writer_card(w) for w in ws)) if ws else ''
     lst = '<div class="op-list">%s</div>' % ''.join(op_item(s) for s in writings[:20]) if writings else wr_empty('Coming soon.')
     main = ('<nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> &rsaquo; Writers</nav>'
-            '<div class="cat-head wr-head"><h1>Writers</h1><p>Opinion, prose and verse from the writers of Mirror Lilong</p></div>%s%s'
+            '<div class="cat-head wr-head"><h1>Writers</h1><p>Opinion, prose &amp; verse, stories and articles from the writers of Mirror Lilong</p></div>%s%s'
             '<div class="two-col"><div class="col-main"><section class="block">%s%s</section></div>'
             '<aside class="col-side">%s%s</aside></div>') % (wr_chips(), grid, sec_title('Latest from our writers'), lst, write_for_us(), follow_box())
-    return page('Writers | Mirror Lilong', 'Opinion, prose and verse from the writers of Mirror Lilong.', 'Writers', main, ctx)
+    return page('Writers | Mirror Lilong', 'Opinion, prose & verse, stories and articles from the writers of Mirror Lilong.', 'Writers', main, ctx)
 
 def build_wr_cat(writings, cat, ctx):
     h, desc = WR_CAT_INFO[cat]
     items = [s for s in writings if s['category'] == cat]
-    lst = '<div class="op-list">%s</div>' % ''.join(op_item(s) for s in items) if items else wr_empty('No %s pieces yet.' % h)
+    lst = '<div class="op-list">%s</div>' % ''.join(op_item(s) for s in items) if items else wr_empty('No %s yet.' % WR_PLURAL[cat].lower() if cat in WR_PLURAL else 'No %s pieces yet.' % h)
     main = ('<nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> &rsaquo; <a href="writers.html">Writers</a> &rsaquo; %s</nav>'
             '<div class="cat-head wr-head"><h1>%s</h1><p>%s</p></div>%s'
             '<div class="two-col"><div class="col-main"><section class="block">%s</section></div>'
@@ -823,9 +832,11 @@ def author_box(w, top=False):
 def build_writing(writings, s, ctx):
     w = s['w']
     pv = s['ck'] == 'pv'
-    body = article_body(s, keep_lines=pv)
+    story = s['ck'] == 'story'
+    # Prose & Verse and Story keep the author's single line breaks (poems, dialogue)
+    body = article_body(s, keep_lines=pv or story)
     pq = str(s.get('pull_quote') or '').strip()
-    if pq and not pv:
+    if pq and not pv and not story:
         quote_html = '<blockquote class="pullq">%s<p>%s</p></blockquote>' % (QUOTE_SVG, esc(pq))
         k = [m.end() for m in re.finditer(r'</p>', body)]
         body = body[:k[1]] + quote_html + body[k[1]:] if len(k) > 3 else body + quote_html
@@ -834,7 +845,7 @@ def build_writing(writings, s, ctx):
         cap = s.get('image_credit') or ''
         fig = '<figure class="art-fig"><img src="%s" alt="%s">%s</figure>' % (esc(s['img']), esc(s['title']), '<figcaption>%s</figcaption>' % inline(cap) if cap else '')
     dek = '<p class="art-dek">%s</p>' % esc(s['summary']) if s['summary'] else ''
-    if pv:
+    if pv or story:
         disc = '<p class="op-disc pv-note">&copy; %s. Published on Mirror Lilong with the author&#8217;s permission.</p>' % (esc(w['name']) if w else 'The author')
     else:
         disc = '<p class="op-disc"><b>Disclaimer:</b> The views expressed in this article are the author&#8217;s own and do not necessarily reflect those of Mirror Lilong.</p>'
@@ -847,9 +858,9 @@ def build_writing(writings, s, ctx):
             '<span class="op-label op-%s">%s</span><h1>%s</h1>%s<div class="art-meta op-meta">%s<time datetime="%s">%s</time></div>%s%s'
             '<div class="art-body%s">%s</div>%s%s%s<p class="back"><a href="%s">&lsaquo; All %s</a></p></article>'
             '<aside class="col-side">%s%s%s</aside></div>%s') % (
-            ' pv-article' if pv else '', cpage, h,
+            {'pv': ' pv-article', 'story': ' story-article'}.get(s['ck'], ''), cpage, h,
             s['ck'], h, esc(s['title']), dek, author_box(w, True), iso(s), fdate(s), share_bar(s, 'top'), fig,
-            ' pv-body' if pv else '', body, disc, author_box(w), share_bar(s, 'end'), cpage, h,
+            {'pv': ' pv-body', 'story': ' story-body'}.get(s['ck'], ''), body, disc, author_box(w), share_bar(s, 'end'), cpage, WR_PLURAL.get(s['category'], h),
             write_for_us(), trending(ctx, s), follow_box(), rel)
     by = (' by ' + w['name']) if w else ''
     return page('%s%s | Mirror Lilong' % (s['title'], by), s['summary'] or s['title'], 'Writers', main, ctx, s['img'] or None)
@@ -907,7 +918,7 @@ def main():
             json.dump(ctx['news'], f, ensure_ascii=False, indent=1)
     with open(os.path.join(OUT, 'ads.txt'), 'w', encoding='utf-8') as f:
         f.write('google.com, pub-4739495411759158, DIRECT, f08c47fec0942fa0\n')
-    # Writers section (English only): /writers, /opinion, /prose-verse, /writer-<slug>, /opinion-<slug>, /prose-verse-<slug>
+    # Writers section (English only): /writers, /opinion, /prose-verse, /story, /article, /writer-<slug>, /<category>-<slug>
     w('writers.html', build_writers(writers, writings, ctx))
     for cname, _, cpage in WR_CATS:
         w(cpage, build_wr_cat(writings, cname, ctx))

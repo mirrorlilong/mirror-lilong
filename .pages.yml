@@ -140,7 +140,7 @@ content:
         type: boolean
         default: false
 
-  # ---------- Writers: Opinion, Prose & Verse (English only, not translated) ----------
+  # ---------- Writers: Opinion, Prose & Verse, Story, Article (English only, not translated) ----------
   - name: writers
     label: Writers
     type: collection
@@ -192,7 +192,7 @@ content:
         default: false
 
   - name: writings
-    label: Opinion, Prose & Verse
+    label: Writings (Opinion, Prose & Verse, Story, Article)
     type: collection
     path: content/writings
     format: json
@@ -212,12 +212,12 @@ content:
         required: true
       - name: category
         label: Category
-        description: Opinion, or Prose & Verse (stories, essays, poems).
+        description: Opinion, Prose & Verse (prose and poems), Story (short stories, fiction) or Article.
         type: select
         required: true
         default: Opinion
         options:
-          values: [Opinion, Prose & Verse]
+          values: [Opinion, Prose & Verse, Story, Article]
       - name: writer
         label: Writer
         description: Pick from Writers. Add the writer there first.
@@ -246,11 +246,11 @@ content:
         type: string
       - name: body
         label: Text
-        description: "Opinion: leave an empty line between paragraphs. Prose & Verse: every line break is kept exactly; leave an empty line between stanzas."
+        description: "Opinion and Article: leave an empty line between paragraphs. Prose & Verse and Story: every line break is kept exactly; leave an empty line between paragraphs or stanzas."
         type: text
         required: true
       - name: pull_quote
-        label: Highlighted quote (optional, Opinion only)
+        label: Highlighted quote (optional, Opinion and Article only)
         description: One striking line, shown big in the middle of the page.
         type: string
       - name: photos
