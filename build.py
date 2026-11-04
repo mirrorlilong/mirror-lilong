@@ -984,9 +984,19 @@ def main():
     ctx = dict(today=now.strftime('%A, ') + str(now.day) + now.strftime(' %B %Y'), year=now.year, lead=lead, slides=slides)
     ctx['top'] = flagged(stories, 'top', 5)  # 5 newest Top-Story-flagged stories, even if also in the slider
     ctx['tick'] = flagged(stories, 'breaking', 7)
-    ctx['trend'] = flagged(stories, 'trending', 8)
-    ctx['trend_own'] = [s for s in stories if s.get('trending')]  # only stories actually switched to Trending, newest first
     ctx['now'] = datetime.datetime.now(datetime.timezone.utc)
+    # Admin-flagged Trending posts show only for 12 hours after their publish time (Hemat, 4 Nov 2026)
+    def _fresh12(s):
+        try:
+            d = s['dt']
+            if d.tzinfo is None:
+                d = d.replace(tzinfo=IST)
+            return (ctx['now'] - d).total_seconds() <= 12 * 3600
+        except Exception:
+            return False
+    _tf = [s for s in stories if s.get('trending') and _fresh12(s)][:8]
+    ctx['trend'] = _tf + [s for s in stories if s not in _tf and not s.get('trending')][:8 - len(_tf)]
+    ctx['trend_own'] = [s for s in stories if s.get('trending') and _fresh12(s)]  # switched to Trending AND under 12h old, newest first
     # Trending: the latest real news (Manipur > Northeast > India > World) read from publishers' feeds at
     # build time; the workflow rebuilds every 3 hours. Any failure keeps the last good list or the old box.
     ctx['news'] = None
