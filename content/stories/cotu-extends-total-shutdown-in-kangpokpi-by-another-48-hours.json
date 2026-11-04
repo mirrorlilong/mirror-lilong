@@ -9,7 +9,7 @@
   "lead": false,
   "breaking": true,
   "top": false,
-  "trending": true,
+  "trending": false,
   "desk": true,
   "video": false,
   "hidden": false
