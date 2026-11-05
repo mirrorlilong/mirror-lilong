@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   schedule:
     # every 3 hours: refresh the Trending news (Manipur > Northeast > India > World)
-    - cron: "17 */3 * * *"
+    - cron: "*/15 * * * *"
 
 permissions:
   contents: write   # lets the build commit new Gemini translations back to main
