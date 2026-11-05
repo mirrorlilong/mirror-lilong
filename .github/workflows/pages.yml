@@ -9,7 +9,7 @@ on:
     - cron: "17 */3 * * *"
 
 permissions:
-  contents: read
+  contents: write   # lets the build commit new Gemini translations back to main
   pages: write
   id-token: write
 
@@ -25,6 +25,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Translate new stories (Gemini)
+        # Uses the repo secret GEMINI_API_KEY. No key or a Gemini problem = skipped, site still publishes.
+        continue-on-error: true
+        timeout-minutes: 12
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python3 translate_gemini.py
+      - name: Save new translations to the repo
+        continue-on-error: true
+        run: |
+          git add translations
+          if git diff --cached --quiet; then echo "no new translations"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Auto-translate (Gemini)"
+          git pull --rebase origin main || git rebase --abort || true
+          git push origin HEAD:main
       - name: Build site
         env:
           URL: https://mirrorlilong.com
