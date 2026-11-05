@@ -101,7 +101,11 @@ THINKING = {}
 VERSION = {}
 
 
-def call_gemini(model, key, prompt):
+class Busy(Exception):
+    pass
+
+
+def call_gemini(model, key, prompt, _try=0):
     cfg = {'temperature': 0.2, 'responseMimeType': 'application/json', 'responseSchema': schema(), 'maxOutputTokens': 65536}
     if model.startswith('gemini-2.5'):
         cfg['thinkingConfig'] = {'thinkingBudget': 0}
@@ -121,6 +125,11 @@ def call_gemini(model, key, prompt):
             return call_gemini(model, key, prompt)
         if e.code == 404: raise NoModel('%s: %s' % (model, msg))
         if e.code == 429: raise Quota(msg)
+        if e.code in (500, 502, 503, 504):
+            if _try < 3:  # Google busy: wait and ask the same model again
+                time.sleep((10, 25, 45)[_try])
+                return call_gemini(model, key, prompt, _try + 1)
+            raise Busy('%s busy (HTTP %s)' % (model, e.code))
         if e.code in (401, 403) or 'API_KEY' in msg: raise BadKey('HTTP %s: %s' % (e.code, msg))
         raise RuntimeError('HTTP %s from Gemini: %s' % (e.code, msg))
     VERSION[model] = data.get('modelVersion') or model
@@ -209,6 +218,8 @@ def translate(slug, story, key):
                 break
             except NoModel as e:
                 log('model not available, trying the next one (%s)' % e); MODELS.remove(model); last = e; continue
+            except Busy as e:
+                log('%s; trying the next model' % e); last = e; continue
             except Quota as e:
                 if model != MODELS[-1]:
                     log('%s quota reached, trying the next model' % model); last = e; continue
