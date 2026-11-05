@@ -10,12 +10,13 @@ on:
 
 permissions:
   contents: write   # lets the build commit new Gemini translations back to main
+  actions: write    # lets the translate job start a rebuild after saving translations
   pages: write
   id-token: write
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'schedule' }}
 
 jobs:
   build:
@@ -25,23 +26,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Translate new stories (Gemini)
-        # Uses the repo secret GEMINI_API_KEY. No key or a Gemini problem = skipped, site still publishes.
-        continue-on-error: true
-        timeout-minutes: 12
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python3 translate_gemini.py
-      - name: Save new translations to the repo
-        continue-on-error: true
-        run: |
-          git add translations
-          if git diff --cached --quiet; then echo "no new translations"; exit 0; fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Auto-translate (Gemini)"
-          git pull --rebase origin main || git rebase --abort || true
-          git push origin HEAD:main
       - name: Build site
         env:
           URL: https://mirrorlilong.com
@@ -62,3 +46,33 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # English goes live first; then Gemini translates and, if anything new was saved, starts a rebuild
+  translate:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Translate new stories (Gemini)
+        # Uses the repo secret GEMINI_API_KEY. No key or a Gemini problem = skipped, site still publishes.
+        continue-on-error: true
+        timeout-minutes: 12
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python3 translate_gemini.py
+      - name: Save new translations and rebuild
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git add translations
+          if git diff --cached --quiet; then echo "no new translations"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Auto-translate (Gemini)"
+          git pull --rebase origin main || git rebase --abort || true
+          git push origin HEAD:main
+          gh workflow run pages.yml --ref main

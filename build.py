@@ -284,7 +284,11 @@ def image_size(rel):
     return None
 
 # ---------- page parts (same markup and classes as the original design) ----------
-def fdate(s): return s['dt'].strftime('%d %b %Y')
+def fdate(s):
+    d = s['dt']
+    if (d.hour, d.minute) == (0, 0):
+        return d.strftime('%d %b %Y')
+    return d.strftime('%d %b %Y') + ', ' + d.strftime('%I:%M %p').lstrip('0') + ' IST'
 def iso(s): return s['dt'].strftime('%Y-%m-%d')
 def url(s): return s.get('_page') or 'news-%s.html' % s['slug']
 def ext(u, label): return '<a href="%s" target="_blank" rel="noopener">%s</a>' % (esc(u), label)
