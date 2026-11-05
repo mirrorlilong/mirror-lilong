@@ -971,6 +971,25 @@ def build_writing(writings, s, ctx):
     return page('%s%s | Mirror Lilong' % (s['title'], by), s['summary'] or s['title'], 'Writers', main, ctx, s['img'] or None,
                 og_type='article', head=article_head(s, s['_page'], news=False))
 
+
+# ---------- festival greeting (Ningol Chakouba & Diwali 2026): strip on every page + one-time pop-up ----------
+# Hides itself automatically after FEST_END (checked in the reader's browser, no rebuild needed).
+FEST_END = '2026-11-12T23:59:00+05:30'
+FEST_CSS = ('<style id="fest-css">\n.fest-strip{background:linear-gradient(90deg,#7a0d2e,#c2410c,#b45309,#7a0d2e);background-size:300% 100%;animation:fs 8s linear infinite;color:#fff;text-align:center;padding:10px 12px;font:600 15px/1.35 Georgia,serif;position:relative;overflow:hidden}\n.fest-strip b{color:#fde68a}.fest-strip .d{display:inline-block;animation:fl 1.6s ease-in-out infinite;margin:0 6px}\n@keyframes fs{to{background-position:300% 0}}@keyframes fl{50%{transform:translateY(-2px) scale(1.15);filter:drop-shadow(0 0 6px #fbbf24)}}\n.fest-ov{position:fixed;inset:0;background:rgba(10,5,0,.72);display:flex;align-items:center;justify-content:center;z-index:9999;padding:18px}\n.fest-card{max-width:380px;width:100%;border-radius:18px;overflow:hidden;background:radial-gradient(circle at 50% 0,#4a1d0a,#1c0a03 70%);color:#fff;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6);position:relative;font-family:Georgia,serif}\n.fest-card .top{padding:26px 20px 8px}.fest-card .lamps{font-size:38px;letter-spacing:10px}.fest-card .lamps span{display:inline-block;animation:fl 1.8s ease-in-out infinite}\n.fest-card .lamps span:nth-child(2){animation-delay:.3s}.fest-card .lamps span:nth-child(3){animation-delay:.6s}\n.fest-card h2{margin:10px 0 4px;font-size:25px;color:#fde68a}.fest-card .mm{font-size:19px;color:#fcd34d;margin:2px 0 10px}\n.fest-card p{font:15px/1.5 system-ui,sans-serif;color:#f5e6d3;margin:0 22px 14px}\n.fest-card .fr{font:600 13px system-ui;color:#fbbf24;letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px}\n.fest-card button{background:#f59e0b;color:#1c0a03;border:0;border-radius:999px;padding:11px 26px;font:700 15px system-ui;margin:0 0 22px}\n.fest-card .x{position:absolute;top:8px;right:12px;background:none;color:#fde68a;font-size:24px;padding:0;margin:0}\n.spark{position:absolute;width:4px;height:4px;border-radius:50%;background:#fde68a;animation:sp 2.5s ease-in-out infinite;opacity:.8}\n@keyframes sp{50%{opacity:0;transform:translateY(-12px)}}\n@media(max-width:600px){.fest-strip{font-size:13.5px;padding:8px 10px}.fest-strip .d:last-child{display:none}}.fest-strip,.fest-ov{display:none}.fest-on .fest-strip{display:block}.fest-on .fest-ov.show{display:flex}</style>')
+FEST_STRIP = '<div class="fest-strip"><span class="d">🪔</span>Happy <b>Ningol Chakouba</b> &amp; <b>Diwali</b> from Mirror Lilong<span class="d">🪔</span></div>'
+FEST_POP = ('<div class="fest-ov" id="festOv"><div class="fest-card">\n<span class="spark" style="top:20px;left:30px"></span><span class="spark" style="top:60px;right:40px;animation-delay:.8s"></span><span class="spark" style="top:120px;left:60px;animation-delay:1.4s"></span>\n<button class="x" onclick="festClose()">×</button>\n<div class="top"><div class="lamps"><span>🪔</span><span>🪔</span><span>🪔</span></div>\n<h2>Happy Ningol Chakouba<br>&amp; Diwali</h2>\n<p>May the bond of family and the light of the diyas fill every home in Manipur with joy, peace and togetherness.</p>\n<div class="fr">— Team Mirror Lilong</div></div>\n<button onclick="festClose()">Thank you 🙏</button></div></div>')
+FEST_JS = ('<script>(function(){if(new Date()>new Date("%s"))return;document.documentElement.classList.add("fest-on");'
+           'window.festClose=function(){var o=document.getElementById("festOv");if(o)o.classList.remove("show");try{localStorage.setItem("ml_fest26","1")}catch(e){}};'
+           'try{if(localStorage.getItem("ml_fest26"))return}catch(e){}'
+           'document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){var o=document.getElementById("festOv");if(o)o.classList.add("show")},800)})})();</script>') % FEST_END
+
+def add_festival(text):
+    if '<header class="masthead">' not in text or 'fest-css' in text:
+        return text
+    text = text.replace('</head>', FEST_CSS + FEST_JS + '</head>', 1)
+    text = text.replace('<header class="masthead">', FEST_STRIP + '<header class="masthead">', 1)
+    return text.replace('</body>', FEST_POP + '</body>', 1)
+
 def main():
     stories = load_stories()
     if not stories:
@@ -1024,6 +1043,8 @@ def main():
             if 'application/ld+json' not in text:
                 extra += site_ld(home=(name == 'index.html'))
             text = text.replace('</head>', extra + '</head>', 1)
+        if name != '404.html':
+            text = add_festival(text)
         if name == '404.html':
             text = root_paths(text)  # served for missing URLs at any depth
         with open(os.path.join(OUT, name), 'w', encoding='utf-8') as f:
