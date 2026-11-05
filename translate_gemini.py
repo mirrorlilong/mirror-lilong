@@ -26,7 +26,7 @@ MODELS = []
 for m in [os.environ.get('GEMINI_MODEL', '').strip(), 'gemini-flash-latest', 'gemini-3.8-flash', 'gemini-flash-lite-latest']:
     if m and m not in MODELS: MODELS.append(m)
 MAX_PER_RUN = int(os.environ.get('GEMINI_MAX_PER_RUN') or 3)
-TIMEOUT = int(os.environ.get('GEMINI_TIMEOUT') or 180)
+TIMEOUT = int(os.environ.get('GEMINI_TIMEOUT') or 120)
 LANGS = [('mni_latn', 'mni-Latn'), ('mni_mtei', 'mni-Mtei'), ('mni_beng', 'mni-Beng'), ('hi', 'hi')]
 
 
@@ -132,6 +132,8 @@ def call_gemini(model, key, prompt, _try=0):
             raise Busy('%s busy (HTTP %s)' % (model, e.code))
         if e.code in (401, 403) or 'API_KEY' in msg: raise BadKey('HTTP %s: %s' % (e.code, msg))
         raise RuntimeError('HTTP %s from Gemini: %s' % (e.code, msg))
+    except (TimeoutError, OSError) as e:  # no answer in time / connection dropped: let the next model try
+        raise Busy('%s did not answer (%s)' % (model, e))
     VERSION[model] = data.get('modelVersion') or model
     cands = data.get('candidates') or []
     if not cands: raise RuntimeError('no answer (%s)' % json.dumps(data.get('promptFeedback', data))[:200])
