@@ -16,10 +16,10 @@
       "caption": "**Officials Attend Inaugural Programme**\n\nThe festival was organised by the Khoijuman Apunba Chaokhat Thourang Lup (KACTL).\n\nThe inaugural function was presided over by Oinam MLA Irengbam Nalini Devi, while Moirang MLA Thongam Shanti Singh attended as the guest of honour.\n\nBishnupur Deputy Commissioner Pooja Elangbam, Agriculture and Horticulture Commissioner-cum-Secretary Thaithuilung Pamei and Loktak Development Authority Project Director Heisnam Balkrishna Singh were also present.\n\nThe festival aims to highlight Khoijuman's agricultural contribution and encourage further development of vegetable cultivation in the region."
     }
   ],
-  "lead": false,
-  "breaking": false,
+  "lead": true,
+  "breaking": true,
   "top": true,
-  "trending": false,
+  "trending": true,
   "desk": true,
   "video": false,
   "hidden": false
