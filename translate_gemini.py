@@ -73,8 +73,12 @@ Translate the English news story in the input JSON into four versions, as a news
 - mni_mtei: the same Manipuri text in Meitei Mayek script ONLY (Unicode block U+ABC0 to U+ABFF). Use the Meitei
   Mayek full stop ꯫ at the end of sentences and Meitei Mayek digits ꯰ ꯱ ꯲ ꯳ ꯴ ꯵ ꯶ ꯷ ꯸ ꯹. Names and abbreviations are
   written in Meitei Mayek too. NO Latin, Bengali or other letters at all. Commas, hyphens, quotes and brackets are fine.
-- mni_beng: the same Manipuri text in Bengali script (as Manipuri newspapers print it), sentence end ।
-  Names and abbreviations in Bengali script. NO Latin letters. Bengali or ASCII digits are fine.
+- mni_beng: EXACTLY the same Manipuri (Meiteilon) text as mni_mtei, only written in Bengali script, word for word
+  (as Manipuri newspapers like Poknapham print it). It is NOT the Bengali language: never translate into Bengali.
+  Keep Manipuri grammar and suffixes (-na, -da, -gi, -bu, -khre, -ye, -ba, -likhi, amasung ...), e.g.
+  "মুখ্য মন্ত্রীনা ইম্ফালদা ৱারোল পীখ্রে।" (Manipuri) and NOT "মুখ্যমন্ত্রী ইম্ফালে বক্তব্য রাখেন।" (Bengali).
+  Bengali words like এবং, করেছে, হয়েছে, জন্য, থেকে, তিনি, একটি, বলেন, সঙ্গে are forbidden; use the Manipuri words.
+  Sentence end ।  Names and abbreviations in Bengali script. NO Latin letters. Bengali or ASCII digits are fine.
 - hi: Hindi in Devanagari, natural Hindi news style (like Dainik Jagran / Amar Ujala). Abbreviations and names in
   Devanagari (e.g. "CM" -> मुख्यमंत्री). NO Latin letters at all; digits are fine. Sentence end ।
 Every version must be complete: title, summary, every body paragraph and every caption paragraph.
@@ -161,6 +165,9 @@ def bad_chars(lang, s):
     return bad
 
 
+BENGALI_WORDS = ['এবং', 'করেছে', 'করেছেন', 'হয়েছে', 'হয়েছে', 'জন্য', 'থেকে', 'তিনি', 'তাদের', 'একটি', 'বলেন', 'সঙ্গে', 'করেন', 'হবে', 'ছিল', 'আছে', 'করা হয়', 'করলেন', 'দিয়েছে']
+
+
 def build_file(story, ans, model):
     en_body = paras(story.get('body', ''))
     en_caps = [(p.get('caption') or '').strip() if isinstance(p, dict) else '' for p in (story.get('photos') or [])]
@@ -191,6 +198,9 @@ def build_file(story, ans, model):
         b = bad_chars(lang, text)
         if b: errs.append('%s has wrong characters: %s' % (lang, ''.join(sorted(b))[:40]))
         if lang == 'mni-Mtei' and len(re.findall('[\uabc0-\uabff]', text)) < 20: errs.append('mni-Mtei has almost no Meitei Mayek')
+        if lang == 'mni-Beng':
+            hits = [w for w in BENGALI_WORDS if w in text]
+            if len(hits) >= 2: errs.append('mni_beng is written in the Bengali LANGUAGE (found Bengali words %s); it must be the same Manipuri text as mni_mtei, only in Bengali script' % ', '.join(hits[:6]))
         out[lang] = rec
     out['_meta'] = {'engine': 'gemini', 'model': VERSION.get(model, model), 'source_lang': 'en',
                     'generated': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%MZ'),
