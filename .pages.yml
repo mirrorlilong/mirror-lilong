@@ -187,6 +187,123 @@ content:
           format: "yyyy-MM-dd"
 
   # ---------- Writers: Opinion, Prose & Verse, Story, Article (English only, not translated) ----------
+  # ---------- Translations: edit a translated story, or add one yourself. The file name must be the SAME as the
+  # English story's file name (e.g. manipur-welcomes-home-lanchenbi-chanu-after-historic-youth-olympic-bronze.json).
+  # Once a story has a file here, the automatic Gemini translation never touches it.
+  - name: translations
+    label: Translations (edit / add)
+    type: collection
+    path: translations
+    format: json
+    exclude: ["_disclaimer.json"]
+    fields:
+      - name: mni-Mtei
+        label: Manipuri - Meetei Mayek
+        type: object
+        fields:
+          - name: title
+            label: Headline
+            type: string
+          - name: summary
+            label: Short summary
+            type: text
+          - name: body
+            label: Story text (empty line between paragraphs; **bold** for sub-headings)
+            type: text
+          - name: captions
+            label: Photo captions (one per photo, in the same order as the English story)
+            type: text
+            list: true
+      - name: mni-Beng
+        label: Manipuri - Bengali script
+        type: object
+        fields:
+          - name: title
+            label: Headline
+            type: string
+          - name: summary
+            label: Short summary
+            type: text
+          - name: body
+            label: Story text (empty line between paragraphs; **bold** for sub-headings)
+            type: text
+          - name: captions
+            label: Photo captions (one per photo, in the same order as the English story)
+            type: text
+            list: true
+      - name: mni-Latn
+        label: Manipuri - Roman (casual)
+        type: object
+        fields:
+          - name: title
+            label: Headline
+            type: string
+          - name: summary
+            label: Short summary
+            type: text
+          - name: body
+            label: Story text (empty line between paragraphs; **bold** for sub-headings)
+            type: text
+          - name: captions
+            label: Photo captions (one per photo, in the same order as the English story)
+            type: text
+            list: true
+      - name: hi
+        label: Hindi
+        type: object
+        fields:
+          - name: title
+            label: Headline
+            type: string
+          - name: summary
+            label: Short summary
+            type: text
+          - name: body
+            label: Story text (empty line between paragraphs; **bold** for sub-headings)
+            type: text
+          - name: captions
+            label: Photo captions (one per photo, in the same order as the English story)
+            type: text
+            list: true
+      - name: en
+        label: English (leave as it is)
+        type: object
+        fields:
+          - name: title
+            label: Headline
+            type: string
+          - name: summary
+            label: Short summary
+            type: text
+          - name: body
+            label: Story text
+            type: text
+      - name: _meta
+        label: Technical info (leave as it is)
+        type: object
+        fields:
+          - name: source_lang
+            label: source_lang
+            type: string
+          - name: engine
+            label: engine
+            type: string
+          - name: method
+            label: method
+            type: text
+          - name: generated
+            label: generated
+            type: string
+          - name: hi
+            label: hi
+            type: text
+          - name: captions
+            label: captions
+            type: text
+          - name: model
+            label: model
+            type: string
+
   - name: writers
     label: Writers
     type: collection
