@@ -3,5 +3,6 @@
   "image": "/img/ad-advertise-wide.png",
   "link": "https://wa.me/918787716765",
   "spot": "top",
-  "active": true
+  "active": false,
+  "end": "2026-11-07"
 }
