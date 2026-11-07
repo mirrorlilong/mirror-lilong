@@ -495,3 +495,9 @@ time{color:var(--mute);font-size:12.5px}
 .e404-home{display:inline-block;background:var(--ink);color:#fff;font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:.04em;padding:13px 22px;border-radius:4px;border-bottom:3px solid var(--red)}
 .e404-home:hover{background:var(--red);color:#fff}
 .e404+.sec-title{margin-top:34px}
+
+/* Ads (admin Ads section): top / middle / bottom banners. Styling from the ads preview. */
+.ml-adi{max-width:970px;margin:14px auto;padding:0 12px;position:relative}
+.ml-adi img{width:100%;height:auto;display:block;border-radius:8px}
+.ml-adi a{display:block}
+.ml-adi small{position:absolute;top:6px;right:18px;font:600 10px/1 sans-serif;color:#fff;background:rgba(0,0,0,.55);padding:3px 5px;border-radius:3px;letter-spacing:.04em}

@@ -140,6 +140,52 @@ content:
         type: boolean
         default: false
 
+  # ---------- Ads: banner ads (E-Kart etc.). Top = above the stories on every page, Middle = on the home page
+  # between news sections, Bottom = just above the footer. Switch an ad off with "Show" (no gap is left).
+  - name: ads
+    label: Ads
+    type: collection
+    path: data/ads
+    format: json
+    filename: "{primary}.json"
+    view:
+      fields: [title, spot, active]
+      primary: title
+      sort: [title]
+      search: [title, link]
+    fields:
+      - name: title
+        label: Ad name (for you; also the picture's alt text)
+        type: string
+        required: true
+      - name: image
+        label: Ad picture (wide banner works best, e.g. 1080 x 280)
+        type: image
+        required: true
+      - name: link
+        label: Link (where a click goes, e.g. https://wa.me/91XXXXXXXXXX)
+        type: string
+        required: true
+      - name: spot
+        label: Where it shows
+        description: Top = above the stories on every page. Middle = on the home page between news sections. Bottom = just above the footer.
+        type: select
+        required: true
+        default: top
+        options:
+          values: [top, middle, bottom]
+      - name: active
+        label: Show on the site
+        description: Switch off to hide the ad. Nothing is shown in its place.
+        type: boolean
+        default: true
+      - name: end
+        label: Stop showing after (optional)
+        description: Leave empty to keep it on until you switch it off.
+        type: date
+        options:
+          format: "yyyy-MM-dd"
+
   # ---------- Writers: Opinion, Prose & Verse, Story, Article (English only, not translated) ----------
   - name: writers
     label: Writers

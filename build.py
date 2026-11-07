@@ -543,6 +543,8 @@ def build_index(stories, ctx):
         else:
             body = '<div class="grid %s">%s</div>' % ('g3' if len(lst) >= 3 else 'g2', ''.join(card(s) for s in lst[:3]))
         main_col.append('<section class="block">%s%s</section>' % (sec_title(c, c.lower() + '.html'), body))
+        if len(main_col) == 2:
+            main_col.append(AD_MIDDLE)  # middle ad slot (empty when no middle ad is on)
     parts.append('<div class="two-col"><div class="col-main">%s</div><aside class="col-side">%s%s%s</aside></div>' % (''.join(main_col), weather_box(), trending(ctx), follow_box()))
     return page('Mirror Lilong | Latest news from Lilong, Manipur and the Northeast', 'Mirror Lilong brings the latest news from Lilong, Manipur, the Northeast, India and the world.', 'Home', ''.join(parts), ctx, lead['img'], strip=weather_box(True))
 
@@ -972,6 +974,70 @@ def build_writing(writings, s, ctx):
                 og_type='article', head=article_head(s, s['_page'], news=False))
 
 
+# ---------- ads: banners managed in the admin's Ads section (data/ads/*.json, written by Pages CMS) ----------
+# top = just before <main id="main"> on every page; middle = on the home page between two news sections;
+# bottom = just above the footer. An ad that is off, ended or not valid is skipped; an empty spot leaves no gap.
+ADS = []
+AD_MIDDLE = '<!--ml-ad-middle-->'  # placeholder in the home page, replaced by the middle ad or by nothing
+AD_SPOTS = ('top', 'middle', 'bottom')
+
+def ad_src(path):
+    """'/img/x.jpg', 'img/x.jpg' or 'static/img/x.jpg' -> '/img/x.jpg' (site-root path, works on every page)."""
+    p = str(path or '').strip()
+    if p.startswith(('http://', 'https://')):
+        return p
+    p = '/' + p.lstrip('/')
+    if p.startswith('/static/'):
+        p = p[len('/static'):]
+    return p
+
+def load_ads():
+    folder = os.path.join(HERE, 'data', 'ads')
+    out = []
+    if not os.path.isdir(folder):
+        return out
+    today = datetime.datetime.now(IST).date()
+    for fn in sorted(os.listdir(folder)):
+        if not fn.endswith('.json'):
+            continue
+        try:
+            a = json.load(open(os.path.join(folder, fn), encoding='utf-8'))
+        except Exception as e:
+            warn('ad %s skipped: not valid JSON (%s)' % (fn, e)); continue
+        if not isinstance(a, dict) or not a.get('active'):
+            continue
+        spot = str(a.get('spot') or '').strip().lower()
+        if spot not in AD_SPOTS:
+            warn('ad %s skipped: spot %r is not top, middle or bottom' % (fn, a.get('spot'))); continue
+        end = parse_date(a.get('end')) if a.get('end') else None
+        if end and end.date() < today:
+            continue  # ended
+        src = ad_src(a.get('image'))
+        if not src.startswith(('http://', 'https://')) and not os.path.isfile(os.path.join(STATIC, src.lstrip('/'))):
+            warn('ad %s skipped: picture %r is not in static/' % (fn, a.get('image'))); continue
+        link = str(a.get('link') or '').strip()
+        if not link.startswith(('https://', 'http://')):
+            warn('ad %s skipped: link %r is not a web address' % (fn, a.get('link'))); continue
+        out.append({'spot': spot, 'src': src, 'link': link, 'title': str(a.get('title') or 'Advertisement').strip()})
+    return out
+
+def ad_block(spot):
+    items = [a for a in ADS if a['spot'] == spot]
+    return ''.join('<div class="ml-adi ml-adi-%s"><a href="%s" target="_blank" rel="sponsored noopener"><img src="%s" alt="%s" loading="lazy" decoding="async"></a><small>ADVERTISEMENT</small></div>' % (
+        spot, esc(a['link'], quote=True), esc(a['src'], quote=True), esc(a['title'], quote=True)) for a in items)
+
+def place_ads(name, text):
+    if name == '404.html':
+        return text
+    if name == 'index.html':
+        text = text.replace(AD_MIDDLE, ad_block('middle'))
+    top, bottom = ad_block('top'), ad_block('bottom')
+    if top:
+        text = text.replace('<main id="main"', top + '<main id="main"', 1)
+    if bottom:
+        text = text.replace('<footer class="footer">', bottom + '<footer class="footer">', 1)
+    return text
+
 # ---------- festival greeting (Ningol Chakouba & Diwali 2026): strip on every page + one-time pop-up ----------
 # Hides itself automatically after FEST_END (checked in the reader's browser, no rebuild needed).
 FEST_END = '2026-11-12T23:59:00+05:30'
@@ -991,6 +1057,8 @@ def add_festival(text):
     return text.replace('</body>', FEST_POP + '</body>', 1)
 
 def main():
+    global ADS
+    ADS = load_ads()
     stories = load_stories()
     if not stories:
         sys.exit('No stories found in content/stories/')
@@ -1045,6 +1113,7 @@ def main():
             text = text.replace('</head>', extra + '</head>', 1)
         if name != '404.html':
             text = add_festival(text)
+        text = place_ads(name, text)
         if name == '404.html':
             text = root_paths(text)  # served for missing URLs at any depth
         with open(os.path.join(OUT, name), 'w', encoding='utf-8') as f:
