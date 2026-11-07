@@ -196,7 +196,18 @@ content:
     path: translations
     format: json
     exclude: ["_disclaimer.json"]
+    view:
+      fields: [title]
+      primary: title
+      sort: [title]
+      search: [title]
+      default:
+        sort: title
+        order: asc
     fields:
+      - name: title
+        label: English headline (used for searching - leave as it is)
+        type: string
       - name: mni-Mtei
         label: Manipuri - Meetei Mayek
         type: object

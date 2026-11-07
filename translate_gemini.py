@@ -202,6 +202,7 @@ def build_file(story, ans, model):
             hits = [w for w in BENGALI_WORDS if w in text]
             if len(hits) >= 2: errs.append('mni_beng is written in the Bengali LANGUAGE (found Bengali words %s); it must be the same Manipuri text as mni_mtei, only in Bengali script' % ', '.join(hits[:6]))
         out[lang] = rec
+    out['title'] = (out.get('en') or {}).get('title', '')  # search title for the admin's Translations list
     out['_meta'] = {'engine': 'gemini', 'model': VERSION.get(model, model), 'source_lang': 'en',
                     'generated': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%MZ'),
                     'method': 'Translated automatically by Google Gemini in GitHub Actions (translate_gemini.py), checked for paragraph counts and scripts',
