@@ -12,6 +12,6 @@
   "top": true,
   "trending": false,
   "desk": true,
-  "video": false,
+  "video": true,
   "hidden": false
 }
