@@ -195,7 +195,7 @@ content:
     type: collection
     path: translations
     format: json
-    exclude: ["_disclaimer.json"]
+    filename: "{primary}.json"
     view:
       fields: [title]
       primary: title
