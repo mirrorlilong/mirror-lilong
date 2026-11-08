@@ -5,11 +5,23 @@
   "summary": "The state-wide system keeps the SDRF, police and fire services in touch even during long power cuts.",
   "image": "/img/mizoram.jpg",
   "image_credit": "Photo: Robjersey / [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Aizawl_City_in_2023.jpg), CC0",
-  "body": "Mizoram has launched a state-wide emergency communication system that can keep disaster-response agencies connected for up to 100 hours during long power cuts.\n\nMinister PC Vanlalruata launched the Public Safety and Disaster Response Communication System in Aizawl on Tuesday. It is meant to stop communication breaking down between the SDRF, police and fire services in an emergency.\n\nThe minister asked officials to hold regular drills and keep the system well maintained, so it is ready when a major disaster hits.",
+  "body": "Mizoram has launched a state-wide emergency communication system that can keep disaster-response agencies connected for up to 100 hours during long power cuts.\n\nMinister PC Vanlalruata launched the Public Safety and Disaster Response Communication System in Aizawl on Tuesday. It is meant to stop communication breaking down between the SDRF, police and fire services in an emergency.\n\nThe minister asked officials to hold regular drills and keep the system well maintained, so it is ready when a major disaster hits.\n\nPC Vanlalruata, who holds the Agriculture, Irrigation and Water Resources portfolio, called it a major project for a state that is highly prone to disasters. He said the network would also help government departments and voluntary organisations work together during big emergencies.\n\nThe system, known as PSDRC, runs on two networks. The main one uses Digital Mobile Radio: a Tier-III trunking system in Aizawl and Tier-II conventional networks in Kolasib, Champhai and Lunglei districts. A second network, the Mission Critical Communication System, runs over 4G and 5G mobile broadband and covers the whole state.\n\nBoth networks are linked at the State Emergency Operation Centre in Aizawl. From there, dispatchers can talk to users on either network and send one message to everyone at the same time. Calls are recorded, and field staff can be tracked by GPS. Hybrid fuel-cell power and solar backup are what allow the network to keep running for up to 100 hours without mains electricity.\n\nDisaster Management and Rehabilitation Special Secretary Sushil Singh said the network was especially important for Mizoram and compared it to some of the best such systems in the country. He asked the deputy commissioners of the districts to work closely with his department to put it into use.\n\nThe state has faced serious disasters in recent years. In May 2024, heavy rain brought by Cyclone Remal triggered landslides in Aizawl district that killed at least 27 people, 21 of them in a stone quarry collapse, while the storm disrupted power and internet services across the Northeast.",
   "sources": [
     {
       "name": "Northeast Now",
       "url": "https://nenow.in/north-east-news/mizoram/mizoram-launches-state-wide-emergency-network-for-disaster-response.html"
+    },
+    {
+      "name": "India Today NE",
+      "url": "https://www.indiatodayne.in/mizoram/story/mizoram-launches-emergency-communication-network-with-100-hour-backup-1468483-2026-10-28"
+    },
+    {
+      "name": "The Samaja (PTI)",
+      "url": "https://www.thesamaja.com/en/national-news/mizoram-launches-100-hour-emergency-communication-network-for-disaster-response"
+    },
+    {
+      "name": "The News Minute (Cyclone Remal, May 2024)",
+      "url": "https://www.thenewsminute.com/news/cyclone-remal-36-dead-in-mizoram-nagaland-assam-and-meghalaya"
     }
   ],
   "lead": false,
