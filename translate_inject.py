@@ -22,6 +22,7 @@ from the story itself (content/stories), so edits to the English post show up as
 """
 import html, json, os, re, sys
 ROOT = os.path.dirname(os.path.abspath(__file__))
+SWITCH_ON = False  # reader language switch hidden on all stories (2026-11-12); True restores it. Translations stay in translations/.
 OUT = os.path.join(ROOT, '_site'); TR = os.path.join(ROOT, 'translations')
 LANGS = [  # code, icon, label, html lang
   ('en', 'EN', 'English', 'en'),
@@ -190,6 +191,8 @@ def inject(page, d, disc):
     return page
 
 def main():
+    if not SWITCH_ON:
+        log('reader language switch is off; story pages stay English-only'); return
     if not os.path.isdir(TR) or not os.path.isdir(OUT):
         log('nothing to do'); return
     disc = dict(DEFAULT_DISC)
