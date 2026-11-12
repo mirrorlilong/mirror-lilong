@@ -621,6 +621,8 @@ def build_article(stories, s, ctx):
     related = [x for x in bycat(stories, s['cat']) if x is not s][:3]
     rel = '<section class="block">%s<div class="grid g3">%s</div></section>' % (sec_title('More from ' + s['cat'], s['cat'].lower() + '.html'), ''.join(card(x) for x in related)) if related else ''
     by = 'Mirror Lilong Desk' if s.get('desk') else 'Mirror Lilong News Desk'
+    if s.get('author'):  # writer picked from the admin dropdown (Pages CMS "author"); empty keeps the desk name
+        by = esc(str(s['author']).strip())
     if s.get('w'):
         by = '<a class="by-w" href="%s">%s<span>By %s</span></a>' % (wurl(s['w']), avatar(s['w'], 's'), esc(s['w']['name']))
     dek = '<p class="art-dek">%s</p>' % esc(s['summary']) if s['summary'] else ''
