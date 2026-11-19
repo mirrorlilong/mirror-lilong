@@ -14,8 +14,8 @@
       "url": "https://eastmojo.com/manipur/2026/11/19/manipuri-short-film-interlude-selected-for-kiff-2026-competition/"
     }
   ],
-  "lead": false,
-  "breaking": false,
+  "lead": true,
+  "breaking": true,
   "top": true,
   "trending": false,
   "desk": true,
